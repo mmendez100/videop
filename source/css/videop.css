@@ -1,19 +1,31 @@
+.videop_container {
+	position: relative;
+}
 
 
+.videop {
+	position: absolute;
+	top 0;
+	left 0;
+	margin 0;
+	padding 0;
+}
 
-
-#videoPlaybar { 
-	display: block;
-	background: #272824; 
+.playbar {
+	position: relative;
+	top 0;
+	left 0;
+	margin: 0;
+	padding: 0;
+	cursor: pointer; 
 	background: rgba(39,40,36, .8);
-	border-top: 1px solid white;
-	margin-top: -41px;
-	width: 100%;
 	text-align: left; 
-	position: relative; 
-	overflow: hidden; 
-	padding: 8px 0;  
 	opacity: 0;
+	z-index: 10;
+	display: block;
+}
+.playbar:hover {
+	opacity: 0.8;
 }
 
 

@@ -48,7 +48,7 @@ Logger.prototype.assert = function(condition, message) {
 };
 
 
-function Videop(videopId, playBarStyle)
+function Videop(videopId, playBarStyle, playbarRatio)
 {
 	// Utility logger
 	var logger = new Logger();
@@ -59,25 +59,44 @@ function Videop(videopId, playBarStyle)
 	logger.assert(player !== null, "Unable to attach player to its Javascript instance!");
 
 	// Build the playbar
-	this.buildPlaybar(player, playBarStyle, logger);
+	this.buildPlaybar(player, playBarStyle, playbarRatio, logger);
 
 };
 
 
-Videop.prototype.buildPlaybar = function(player, playBarStyle, logger)
+Videop.prototype.buildPlaybar = function(player, playBarStyle, playbarRatio, logger)
 {
 	// Sanity checks!
 	logger.assert(playBarStyle != "", "CSS for the playbar is missing!");
 
-	// Build the playbar
+	// Now we remove the existing controls
+	player.removeAttribute("controls");
+
+	// Now we create our own controls
+	var playBar = document.createElement("canvas");
+	logger.assert(playBar != "", "Unable to create the playBar canvas object!");
+	// Add styles, and adjust as adequate
+	playBar.classList.add(playBarStyle);
+	playBar.width = player.offsetWidth;
+	playBar.height = player.offsetHeight * playbarRatio;
+	playBar.style.top = (player.offsetHeight - playBar.height) + "px";
+	logger.log("Playbar dimensions: width=" + playBar.width + " height=" + playBar.height +
+		" top=" + playBar.style.top,
+		logger.levelsEnum.VERBOSE);
+	var parent = player.parentNode;
+	// Check that the video player has its DIV container. 
+	logger.assert(parent.nodeName == "DIV", "No DIV container to the video player!");
+	// Now attach the playBar
+	parent.appendChild(playBar);
 };
 
 
 ////////////////// Main ////////////////////
 
 
-// We attach to the existing video player
-var videoPlayer1 = new Videop("video1", "#video1_playbar");
+// We attach an instance of class Videop to the existing video player.
+// specifiyng the playbar's CSS style and its size or ratio ("thickness")
+var videoPlayer1 = new Videop("video1", "playbar", 0.08);
 
 
 
