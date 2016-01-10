@@ -1,0 +1,70 @@
+
+
+
+
+#videoPlaybar { 
+	display: block;
+	background: #272824; 
+	background: rgba(39,40,36, .8);
+	border-top: 1px solid white;
+	margin-top: -41px;
+	width: 100%;
+	text-align: left; 
+	position: relative; 
+	overflow: hidden; 
+	padding: 8px 0;  
+	opacity: 0;
+}
+
+
+#oldvideoControls {
+	display: none;
+}
+
+
+/* PROGRESS BAR */
+#progress { 
+	cursor: pointer;
+}
+
+#progress #progress_box { 
+	float: center; 
+	width: 95%;
+	height: 10px; 
+	
+	border: 1px solid #292929; 
+	border-radius: 5px; 
+	box-shadow: 0 1px 0 #292929, 0 -1px 0 #292929;
+	
+	margin: 2px 0 0 5px; 
+	padding: 2px;
+	
+	overflow:hidden; 
+	
+}
+
+#progress #play_progress { 
+	display: block; 
+	width: 0px; 
+	height: 10px; 
+	
+	background-color: #fff; 
+	border-radius: 5px; 
+}
+
+
+#progress #play_time { 
+	float: left; 
+	margin: 7px 0 0 5px; 
+	font-size: 10px; 
+	font-weight: normal; 
+	font-family: Helvetica, Arial, sans-serif;  
+	line-height: 1;
+}
+
+
+#video_container .fullsizeVideo {
+	position: fixed; 
+	left: 0;
+	top: 0;
+}
