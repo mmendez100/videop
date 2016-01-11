@@ -239,7 +239,7 @@ PlayHead.prototype.isDraggable = function(xMousePos) {
 	var ubound = this.xPosLast + this.grabTolerance;
 	var retVal = (xMousePos >= lbound) && (xMousePos <= ubound);
 
-	this.logger.log("isDraggable, current " + xMousePos + " vs, prev. " + this.xPosLast + 
+	this.logger.log("isDraggable, current=" + xMousePos + " vs, prev=" + this.xPosLast + 
 		", tolerance=" + this.grabTolerance + " grabable playhead: " + retVal, 
 		this.logger.levelsEnum.VERBOSE);
 	return retVal;
@@ -267,7 +267,7 @@ PlayHead.prototype.handleMouseOut = function(e) {
 PlayHead.prototype.handleOnMouseDown = function(e) {
 	this.logger.log("handleOnMouseDown", this.logger.levelsEnum.VERBOSE);
 	if (this.isDraggable(e.pageX)) {
-		this.drawHead(-1, e.pageX, true);
+		this.drawHead(-1, -1, true); // Tolerance might move playbar, just make it bold.
 		this.grabbed = true;
 		this.logger.log("handleMouseDown, the user grabbed the playbar!", 
 			this.logger.levelsEnum.VERBOSE);
