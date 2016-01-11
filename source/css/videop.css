@@ -28,6 +28,17 @@
 	opacity: 0.8;
 }
 
+.playhead-visible {
+	fillstyle: rgba(56,23,19, .8);
+	opacity: 1;
+}
+
+.playbar-invisible {
+	fillstyle: rgba(39,40,36, .8);
+	opacity: 0.8;
+}
+
+
 
 #oldvideoControls {
 	display: none;
