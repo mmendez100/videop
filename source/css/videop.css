@@ -1,5 +1,7 @@
-.videop_container {
+.container {
 	position: relative;
+	margin: 5px;
+	padding: 5px; 
 }
 
 
@@ -18,7 +20,7 @@
 	margin: 0;
 	padding: 0;
 	cursor: pointer; 
-	background: rgba(39,40,36, .8);
+	background: #DEB887;
 	text-align: left; 
 	opacity: 0;
 	z-index: 10;
@@ -27,17 +29,6 @@
 .playbar:hover {
 	opacity: 0.8;
 }
-
-.playhead-visible {
-	fillstyle: rgba(56,23,19, .8);
-	opacity: 1;
-}
-
-.playbar-invisible {
-	fillstyle: rgba(39,40,36, .8);
-	opacity: 0.8;
-}
-
 
 
 #oldvideoControls {
