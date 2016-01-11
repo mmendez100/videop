@@ -7,7 +7,7 @@
 // Constructor
 function Logger() {
 	// We start with a silent, no log level 
-	var level = this.levelsEnum.SILENT;
+	this.level = this.levelsEnum.SILENT;
 };
 
 Logger.prototype.levelsEnum = Object.freeze({SILENT : 0, MEDIUM : -1, VERBOSE : -2});
@@ -27,8 +27,8 @@ Logger.prototype.setLevel = function(level) {
 };
 
 // A function used to log
-Logger.prototype.log = function(message,level) {
-	if (level >= this.level) console.log (message);	
+Logger.prototype.log = function(message,writeLevel) {
+	if (writeLevel >= this.level) console.log (message);	
 };
 
 // An assertion function
@@ -50,22 +50,22 @@ Logger.prototype.assert = function(condition, message) {
 
 function Videop(videopId, playBarStyle, playbarRatio)
 {
-	// Utility logger
-	var logger = new Logger();
-	logger.setLevel(logger.levelsEnum.VERBOSE);
+	// Utility logger, we set it up to VERBOSE for development or testing, else MEDIUM
+	this.logger = new Logger();
+	this.logger.setLevel(this.logger.levelsEnum.VERBOSE); // Make MEDIUM for Production //
 
 	// We associate the html player to this instance of Videop
 	var player = document.getElementById(videopId);
-	logger.assert(player !== null, "Unable to attach player to its Javascript instance!");
+	this.logger.assert(player !== null, "Unable to attach player to its Javascript instance!");
 
 	// Build the playbar
-	this.buildPlaybar(player, playBarStyle, playbarRatio, logger);
+	this.playbar = new Playbar(player, playBarStyle, playbarRatio, this.logger);
+	this.logger.assert(this.playbar !== null, "Unable to create the playbar!");
 
 };
 
 
-Videop.prototype.buildPlaybar = function(player, playBarStyle, playbarRatio, logger)
-{
+function Playbar (player, playBarStyle, playbarRatio, logger) {
 	// Sanity checks!
 	logger.assert(playBarStyle != "", "CSS for the playbar is missing!");
 
@@ -86,9 +86,17 @@ Videop.prototype.buildPlaybar = function(player, playBarStyle, playbarRatio, log
 	var parent = player.parentNode;
 	// Check that the video player has its DIV container. 
 	logger.assert(parent.nodeName == "DIV", "No DIV container to the video player!");
-	// Now attach the playBar
+	// Now attach the playBar & create the playhead
 	parent.appendChild(playBar);
+
+
+	// Now build the 
 };
+
+function PlayHead (playbar) {
+
+};
+
 
 
 ////////////////// Main ////////////////////
