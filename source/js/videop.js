@@ -10,6 +10,8 @@ function Logger() {
 	this.level = this.levelsEnum.SILENT;
 };
 
+
+// Member functions
 Logger.prototype.levelsEnum = Object.freeze({SILENT : 0, MEDIUM : -1, VERBOSE : -2});
 
 // Custom level setter
@@ -48,7 +50,12 @@ Logger.prototype.assert = function(condition, message) {
 };
 
 
-function Videop(videopId, playBarStyle, playbarRatio)
+
+///////// Videop object //////////////
+
+
+// Constructor
+function Videop(videopId, playBarStyle, playHeadStyle, playbarRatio)
 {
 	// Utility logger, we set it up to VERBOSE for development or testing, else MEDIUM
 	this.logger = new Logger();
@@ -58,13 +65,20 @@ function Videop(videopId, playBarStyle, playbarRatio)
 	var player = document.getElementById(videopId);
 	this.logger.assert(player !== null, "Unable to attach player to its Javascript instance!");
 
-	// Build the playbar
+	// Build the playbar, store it
 	this.playbar = new Playbar(player, playBarStyle, playbarRatio, this.logger);
 	this.logger.assert(this.playbar !== null, "Unable to create the playbar!");
 
+	// Now build and draw the playhead
+	this.playHead = new PlayHead(this.playbar, playHeadStyle, this.logger);
+	this.logger.assert(this.playHead !== null, "Unable to create the playhead!");
 };
 
 
+///////// Playbar object //////////////
+
+
+// Playbar constructor
 function Playbar (player, playBarStyle, playbarRatio, logger) {
 	// Sanity checks!
 	logger.assert(playBarStyle != "", "CSS for the playbar is missing!");
@@ -89,11 +103,18 @@ function Playbar (player, playBarStyle, playbarRatio, logger) {
 	// Now attach the playBar & create the playhead
 	parent.appendChild(playBar);
 
-
-	// Now build the 
 };
 
+
+///////// Playhead object //////////////
+
+
+// Playhead constructor
 function PlayHead (playbar) {
+
+	this.playbar = playbar;	// We store it for future use
+
+	// Draw at the initial position
 
 };
 
@@ -104,7 +125,7 @@ function PlayHead (playbar) {
 
 // We attach an instance of class Videop to the existing video player.
 // specifiyng the playbar's CSS style and its size or ratio ("thickness")
-var videoPlayer1 = new Videop("video1", "playbar", 0.08);
+var videoPlayer1 = new Videop("video1", "playbar", "playhead", 0.08);
 
 
 
