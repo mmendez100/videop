@@ -85,22 +85,30 @@ function Playbar (player, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 	// Now we remove the existing controls
 	player.removeAttribute("controls");
 
-	// Now we create our own controls
+	// Now we create our own canvas
 	this.canvas = document.createElement("canvas");
 	this.logger.assert(this.canvas != null, "Unable to create the playBar canvas object!");
-	// Add styles, and adjust as adequate
+
+	// Add the canvas to the video player (as its parent) 
+	// after checking that the player has a container
+	var parent = player.parentNode;
+	this.logger.assert(parent.nodeName == "DIV", "No DIV container to the video player!");
+	parent.appendChild(this.canvas);
+
+	// Add styles, will inherit position from the parent
 	this.canvas.classList.add(playBarStyle);
-	this.canvas.width = player.offsetWidth;
-	this.canvas.height = player.offsetHeight * playbarRatio;
-	this.canvas.style.top = (player.offsetHeight - this.canvas.height) + "px";
+	this.canvas.style.position = "inherit";
+
+	// Now adjust the size and position at bottom, overlapping the video 
+	var playerRect = player.getBoundingClientRect();;
+	this.canvas.width = playerRect.width; 
+	this.canvas.height = playerRect.height * playbarRatio;
+	// Calculate height of playbar making sure we never under-round...
+	var canvasTop = Math.round(player.offsetHeight - this.canvas.offsetHeight + 0.5);
+	this.canvas.style.top = canvasTop + "px"; 
 	this.logger.log("Playbar canvas: width=" + this.canvas.width + " height=" + 
 		this.canvas.height + " top=" + this.canvas.style.top,
 		this.logger.levelsEnum.VERBOSE);
-	var parent = player.parentNode;
-	// Check that the video player has its DIV container. 
-	this.logger.assert(parent.nodeName == "DIV", "No DIV container to the video player!");
-	// Now attach the playBar canvas
-	parent.appendChild(this.canvas);
 
 	// Now build and draw the playhead
 	this.playHead = new PlayHead(this, playHeadStyle, playHeadStyleBold, this.logger);
