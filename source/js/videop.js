@@ -147,10 +147,13 @@ function PlayHead (playbar, playHeadStyle, logger) {
 	// Draw at the initial position at 0%
 	this.drawHead(0);
 
+	// Save the existing cursor
+	this.oldCursor = this.playbar.canvas.style.cursor;
+
 	// And attach the handlers to manage the playhead
 	// Have the playhead listen for mouseover, so that it can be dragged
 	this.playbar.canvas.onmouseover = this.handleMouseOver.bind(this);
-
+	this.playbar.canvas.onmouseout = this.handleMouseOut.bind(this);
 };
 
 PlayHead.prototype.drawHead = function(relPosition) {
@@ -182,10 +185,17 @@ PlayHead.prototype.drawHead = function(relPosition) {
 // returns true iff the mouse is above the playbar
 PlayHead.prototype.isDraggable = function(xMousePos) {
 
+	// Get the current size of the playbar, and normalize
+	var canvasR = this.playbar.canvas.getBoundingClientRect();
+	xMousePos = xMousePos - canvasR.left;
+	this.logger.assert (xMousePos >= 0, "IsDraggable, invalid calculated xPos=" + xMousePos,
+		this.logger.levelsEnum.WARN);
+
 	// If the brushWidth is too small, let folks drag it more easily
 	var retVal = (xMousePos >= (this.xPosLast - this.tolerance) || 
 		xMousePos <= (this.xPosLast + this.grabTolerance));
-	this.logger.log("isDraggable, grabable playhead: " + retVal, 
+	this.logger.log("isDraggable, current " + xMousePos + " vs, prev. " + this.xPosLast + 
+		", tolerance=" + this.grabTolerance + " grabable playhead: " + retVal, 
 		this.logger.levelsEnum.VERBOSE);
 	return retVal;
 };
@@ -195,10 +205,16 @@ PlayHead.prototype.handleMouseOver = function(e) {
 	this.logger.log("handleMouseOver", this.logger.levelsEnum.VERBOSE);
 	if (this.isDraggable(e.pageX)) {
 		// Change the cursor to show that the head can be dragged
+		this.oldCursor = this.playbar.canvas.style.cursor;
 		this.playbar.canvas.style.cursor = "move";
-
 	}
+	else { this.playbar.canvas.style.cursor = this.oldCursor; }
+};
 
+PlayHead.prototype.handleMouseOut = function(e) {
+
+	this.logger.log("handleMouseOut",	this.logger.levelsEnum.VERBOSE);
+	this.playbar.canvas.style.cursor = this.oldCursor;
 };
 ////////////////// Main ////////////////////
 
