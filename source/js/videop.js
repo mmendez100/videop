@@ -1,58 +1,6 @@
-
 "use strict";
 
-
-//// A Utility Logger Object ////
-
-// Constructor
-function Logger() {
-	// We start with a silent, no log level 
-	this.level = this.levelsEnum.SILENT;
-};
-
-
-// Member functions
-Logger.prototype.levelsEnum = Object.freeze({SILENT : 0, MEDIUM : -1, VERBOSE : -2});
-
-// Custom level setter
-Logger.prototype.setLevel = function(level) {
-
-	if (level <= this.levelsEnum.SILENT && level >= this.levelsEnum.VERBOSE) {
-		this.level = level;
-		console.log ("Logger level set to " + this.level);
-		var date = new Date();
-		console.log ("Logging started at: " + date.toLocaleDateString() + " " + 
-			date.toLocaleTimeString());
-		date = null;
-	}
-	else throw new Error("Invalid log level passed in!!! (" + level + ")");
-};
-
-// A function used to log
-Logger.prototype.log = function(message,writeLevel) {
-	if (writeLevel >= this.level) console.log (message);	
-};
-
-// An assertion function
-Logger.prototype.assert = function(condition, message) {
-	var assert_failed = !condition;
-    if (assert_failed) {
-        message = message || "Assertion failed!";
-        console.log (message);
-        if (typeof Error !== "undefined") {
-            throw new Error(message);
-        }
-        throw message; // Fallback
-    }
-	if (this.level == this.levelsEnum.VERBOSE) {
-		console.log ("Assert OK: Suppressed message [" + message + "]");
-	}
-};
-
-
-
 ///////// Videop object //////////////
-
 
 // Constructor
 function Videop(videopId, playBarStyle, playHeadStyle, playHeadStyleBold, playbarRatio)
@@ -61,29 +9,158 @@ function Videop(videopId, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 	this.logger = new Logger();
 	this.logger.setLevel(this.logger.levelsEnum.VERBOSE); // Make MEDIUM for Production //
 
-	// We associate the html player to this instance of Videop
-	var player = document.getElementById(videopId);
-	this.logger.assert(player !== null, "Unable to attach player to its Javascript instance!");
+	// We associate the html player to this instance of Videop, save it in an internal variable
+	this.player = document.getElementById(videopId);
+	this.logger.assert(this.player !== null, "Unable to attach player to its Javascript instance!");
 
 	// Build the playbar, store it. The playbar also includes the playhead.
-	this.playbar = new Playbar(player, playBarStyle, playHeadStyle, playHeadStyleBold, 
+	this.playbar = new Playbar(this, playBarStyle, playHeadStyle, playHeadStyleBold, 
 		playbarRatio, this.logger);
 	this.logger.assert(this.playbar !== null, "Unable to create the playbar!");
 
+	// Double-click plays or pauses. We start paused.
+	this.paused = true;
+	this.player.onclick = this.handleOnClick.bind(this);
+	this.player.onended = this.handleOnEnded.bind(this);
+
+	// We activate the object that tracks the video (and updates the playhead and viceversa)
+	this.tracker = new Tracker(this, this.playbar, this.logger);
+
 };
+
+Videop.prototype.pauseVideo = function () {
+	this.player.pause();
+	this.paused = true;
+};
+
+Videop.prototype.playVideo = function () {
+	this.player.play();
+	this.paused = false;
+};
+
+
+Videop.prototype.handleOnClick = function (e) {
+
+	// Toggle between pause and play
+	if (this.paused) {
+		this.logger.log("handleDblcClick: PLAY the video!",	this.logger.levelsEnum.VERBOSE);
+		this.playVideo();
+	}
+	else {
+		this.logger.log("handleDblcClick: PAUSE the video!", this.logger.levelsEnum.VERBOSE);
+		this.pauseVideo();
+	}
+};
+
+Videop.prototype.handleOnEnded = function (e) {
+
+	// The video is paused at the end
+	this.logger.log("handleOnEnded: Video has ended!",	this.logger.levelsEnum.VERBOSE);
+	this.paused = true;
+};
+
+Videop.prototype.handleOnSeek = function(relNewPos) {
+	// The user has requested a seek via the playbar...
+
+	// If the video is paused, we will respect the user's choice.
+	var paused = this.paused;
+
+	// Pause and move.
+	this.pauseVideo();
+	this.logger.log("handleOnSeek: User requests video at relNewPos=" + relNewPos,
+		this.logger.levelsEnum.VERBOSE);
+	var newTime = this.player.duration * relNewPos;
+	if (newTime > this.player.duration) { newTime = this.player.duration; }
+	this.player.currentTime = newTime;
+
+	// If we were playing previously, restore playback
+	if (paused == false) { this.playVideo(); }
+};
+
+// Constructor, Tracker Object
+function Tracker(videop, playbar, logger) {
+
+	this.logger = logger;
+	this.videop = videop;
+	this.playbar = playbar;
+
+	// Our stats will be stored here...
+	this.stats = {};
+	this.statsBucket = 0;
+	this.deltaStart = -1;
+	this.videoStart = -1;
+
+	// We create a timer to update the playhead location
+	this.logger.log("Tracker constructor called! Creating timer.",	this.logger.levelsEnum.VERBOSE);
+	this.headTimer = new Timer(100, this.updateHead.bind(this), this.logger);
+	this.headTimer.start();
+}; 
+
+Tracker.prototype.actionEnum = Object.freeze({PLAY_BEGINS : -1, PLAY_STOPS : -2});
+
+Tracker.prototype.updateStats = function (action) {
+
+	// Case 1: We are paused, but now playback has started
+	// Just remember when we started playing...
+	if (action == this.actionEnum.PLAY_BEGINS) {
+		this.deltaStart = new Date.now();
+		this.videoStart = this.videop.player.currentTime; 
+		return;
+	}
+
+	// Case 2: We were playing, now we are paused
+	// Calculate how much we watched...
+	if (action == this.actionEnum.PLAY_STOPS) {
+		// How long have we been playing?
+		var deltaStop = new Date.now();
+		var videoStop = this.videop.player.currentTime;
+		var playDelta = deltaStop - this.deltaStart;
+
+		// Now store this
+		var entry = new Array(this.deltaStart, deltaStop, playDelta, this.videoStart, videoStop);
+		var statsBucketStr = this.statsBucket.toString();
+		this.stats[statsBucketStr] = entry;
+		
+		this.logger.log("updateStats: New record!! Entry=" + statsBucketStr, 
+			this.logger.levelsEnum.VERBOSE);
+		this.statsBucket++;
+
+		// Now, clear deltaStart
+		this.deltaStart = NaN;
+	}
+
+}; 
+
+
+Tracker.prototype.updateHead = function () {
+
+	// First, have we been playing anything?
+	if (this.videop.paused) return;
+
+	// OK, we are playing. Update location of playhead...
+	var newRelPos = (this.videop.player.currentTime / this.videop.player.duration);
+
+	this.logger.log("updateHead: Playing in progress. rel new position of playhead= " +
+		newRelPos, this.logger.levelsEnum.VERBOSE);
+
+	this.videop.playbar.playHead.drawHead(newRelPos, -1, null);
+	
+}; 
+
 
 
 ///////// Playbar object //////////////
 
 
 // Playbar constructor
-function Playbar (player, playBarStyle, playHeadStyle, playHeadStyleBold, playbarRatio, logger) {
+function Playbar (videop, playBarStyle, playHeadStyle, playHeadStyleBold, playbarRatio, logger) {
 	// Store logger, then do sanity checks
 	this.logger = logger;
 	this.logger.assert(playBarStyle != "", "CSS for the playbar is missing!");
 
 	// Now we remove the existing controls
-	player.removeAttribute("controls");
+	this.videop = videop;
+	this.videop.player.removeAttribute("controls");
 
 	// Now we create our own canvas
 	this.canvas = document.createElement("canvas");
@@ -91,7 +168,7 @@ function Playbar (player, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 
 	// Add the canvas to the video player (as its parent) 
 	// after checking that the player has a container
-	var parent = player.parentNode;
+	var parent = this.videop.player.parentNode;
 	this.logger.assert(parent.nodeName == "DIV", "No DIV container to the video player!");
 	parent.appendChild(this.canvas);
 
@@ -100,11 +177,11 @@ function Playbar (player, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 	this.canvas.style.position = "inherit";
 
 	// Now adjust the size and position at bottom, overlapping the video 
-	var playerRect = player.getBoundingClientRect();;
+	var playerRect = this.videop.player.getBoundingClientRect();;
 	this.canvas.width = playerRect.width; 
 	this.canvas.height = playerRect.height * playbarRatio;
 	// Calculate height of playbar making sure we never under-round...
-	var canvasTop = Math.round(player.offsetHeight - this.canvas.offsetHeight + 0.5);
+	var canvasTop = Math.round(this.videop.player.offsetHeight - this.canvas.offsetHeight + 0.5);
 	this.canvas.style.top = canvasTop + "px"; 
 	this.logger.log("Playbar canvas: width=" + this.canvas.width + " height=" + 
 		this.canvas.height + " top=" + this.canvas.style.top,
@@ -113,7 +190,6 @@ function Playbar (player, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 	// Now build and draw the playhead
 	this.playHead = new PlayHead(this, playHeadStyle, playHeadStyleBold, this.logger);
 	this.logger.assert(this.playHead !== null, "Unable to create the playhead!");
-
 };
 
 
@@ -170,14 +246,17 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 	this.playbar.canvas.onmousedown = this.handleOnMouseDown.bind(this);
 	this.playbar.canvas.onmouseup = this.handleOnMouseUp.bind(this);
 	this.playbar.canvas.onmousemove = this.handleOnMouseMove.bind(this);
-
+	this.playbar.canvas.onclick = this.handleOnClick.bind(this);
 };
 
 PlayHead.prototype.drawHead = function(relPosition, absPosition, bold) {
 
 	// No context, we are outta here!
 	if (this.canvasC == null) return;
-	
+
+	// If the head is moving because the video is moving, respect boldness
+	if (bold == null) bold = this.boldLast;
+
 	// Figure out where to draw. And draw!
 	var xPos = -1;
 	if (relPosition >= 0) {
@@ -193,6 +272,11 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold) {
 		}
 		this.logger.log("drawHead absolute placement req, calculated pos to be =" + xPos +
 			" bold: " + bold, this.logger.levelsEnum.VERBOSE); 
+	}
+
+	// If at the end, correct as we need to consider the brush
+	if (xPos + this.brushWidth > this.playbar.canvas.width) { 
+		xPos = this.playbar.canvas.width - this.brushWidth
 	}
 
 	// If relPosition and absPosition both -1, re-draw existing playhead at identical location
@@ -290,6 +374,14 @@ PlayHead.prototype.handleOnMouseUp = function(e) {
 		this.drawHead(-1, e.pageX, false);
 		this.grabbed = false; // no longer grabbing it, if we were grabbing it	
 	}
+};
+
+PlayHead.prototype.handleOnClick = function(e) {
+	this.logger.log("handleOnClick", this.logger.levelsEnum.VERBOSE);
+	this.grabbed = false; // no longer grabbing it, if we were grabbing it
+	this.drawHead(-1, e.pageX, false);
+	var relNewPos = e.pageX / this.playbar.canvas.width;
+	this.playbar.videop.handleOnSeek (relNewPos);
 };
 
 PlayHead.prototype.handleOnMouseMove = function(e) {
