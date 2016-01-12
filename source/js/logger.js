@@ -8,7 +8,6 @@ function Logger() {
 	this.level = this.levelsEnum.SILENT;
 };
 
-
 // Member functions
 Logger.prototype.levelsEnum = Object.freeze({SILENT : 0, MEDIUM : -1, VERBOSE : -2});
 

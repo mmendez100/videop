@@ -59,8 +59,8 @@ Videop.prototype.handleOnEnded = function (e) {
 	this.paused = true;
 };
 
-Videop.prototype.handleOnSeek = function(relNewPos) {
-	// The user has requested a seek via the playbar...
+Videop.prototype.handleOnClickSeek = function(relNewPos) {
+	// The user has requested a seek via a single click on the playbar...
 
 	// If the video is paused, we will respect the user's choice.
 	var paused = this.paused;
@@ -76,6 +76,18 @@ Videop.prototype.handleOnSeek = function(relNewPos) {
 	// If we were playing previously, restore playback
 	if (paused == false) { this.playVideo(); }
 };
+
+Videop.prototype.handleGrabSeek = function(relNewPos) {
+
+	// Pause and move.
+	this.pauseVideo();
+	this.logger.log("handleOnSeek: User requests video at relNewPos=" + relNewPos,
+		this.logger.levelsEnum.VERBOSE);
+	var newTime = this.player.duration * relNewPos;
+	if (newTime > this.player.duration) { newTime = this.player.duration; }
+	this.player.currentTime = newTime;
+
+}; 
 
 // Constructor, Tracker Object
 function Tracker(videop, playbar, logger) {
@@ -228,6 +240,7 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 	this.xPosLast = -1;
 	this.boldLast = false; 
 	this.grabbed = false;
+	this.pausedBeforeGrab =false;
 
 	// Prepare for drawing, get context
 	this.canvasC = this.playbar.canvas.getContext('2d');
@@ -343,17 +356,15 @@ PlayHead.prototype.handleMouseOver = function(e) {
 
 	// If the user hovers above the playhead, we change it to show it selectable...
 	if (this.isDraggable(e.pageX)) {
-		this.drawHead(-1, -1, true); // User could select
+		this.drawHead(-1, -1, true); // User can select
 	}
 };
 
 PlayHead.prototype.handleMouseOut = function(e) {
 
 	this.logger.log("handleMouseOut", this.logger.levelsEnum.VERBOSE);
-//	if (this.grabbed) {
 		this.grabbed = false; // User looses the grab
 		this.drawHead(-1, -1, false); // Selection is lost, but playhead stays still
-//	}
 };
 
 PlayHead.prototype.handleOnMouseDown = function(e) {
@@ -361,6 +372,7 @@ PlayHead.prototype.handleOnMouseDown = function(e) {
 	if (this.isDraggable(e.pageX)) {
 		this.drawHead(-1, -1, true); // Tolerance might move playbar, just make it bold.
 		this.grabbed = true;
+		this.pausedBeforeGrab = this.playbar.videop.paused;
 		this.logger.log("handleMouseDown, the user grabbed the playbar!", 
 			this.logger.levelsEnum.VERBOSE);
 	}
@@ -371,8 +383,12 @@ PlayHead.prototype.handleOnMouseUp = function(e) {
 	if (this.grabbed) {
 		this.logger.log("handleOnMouseUp, the user released the playbar!", 
 			this.logger.levelsEnum.VERBOSE);
+		this.grabbed = false; // no longer grabbing it
 		this.drawHead(-1, e.pageX, false);
-		this.grabbed = false; // no longer grabbing it, if we were grabbing it	
+		var relNewPos = e.pageX / this.playbar.canvas.width;
+
+		// Respect the user's choice. If playing before seeking, restore.
+		if (this.pausedBeforeGrab == false) this.playbar.videop.playVideo();
 	}
 };
 
@@ -381,7 +397,7 @@ PlayHead.prototype.handleOnClick = function(e) {
 	this.grabbed = false; // no longer grabbing it, if we were grabbing it
 	this.drawHead(-1, e.pageX, false);
 	var relNewPos = e.pageX / this.playbar.canvas.width;
-	this.playbar.videop.handleOnSeek (relNewPos);
+	this.playbar.videop.handleOnClickSeek(relNewPos);
 };
 
 PlayHead.prototype.handleOnMouseMove = function(e) {
@@ -389,6 +405,8 @@ PlayHead.prototype.handleOnMouseMove = function(e) {
 	// Case 1: The user has the playhead grabbed, we follow the mouse:
 	if (this.grabbed) {
 		this.drawHead(-1, e.pageX, true);
+		var relNewPos = e.pageX / this.playbar.canvas.width;
+		this.playbar.videop.handleGrabSeek(relNewPos);
 		return;
 	}
 
