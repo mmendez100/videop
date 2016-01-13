@@ -30,8 +30,7 @@ function Videop(videopId, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 
 	// Firefox, no resizes when building... do the logic.
 	if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) { 
-		this.logger.log("Firing playbar sizing logic in resize for Firefox!",
-			 this.logger.levelsEnum.VERBOSE);
+		this.logger.log("Firing playbar sizing logic in resize for Firefox!");
 		this.handleOnResize();
 	}
 };
@@ -54,7 +53,7 @@ Videop.prototype.handleOnResize = function() {
 	// Exit if nested resizes...
 	if (this.resizing) { return;}
 
-	this.logger.log("handleOnResize: Resizing!", this.logger.levelsEnum.VERBOSE);
+	this.logger.log("handleOnResize: Resizing!");
 	this.resizing = true;
 	this.playbar.handleOnResize();
 	this.resizing = false;
@@ -65,11 +64,11 @@ Videop.prototype.handleOnClick = function (e) {
 
 	// Toggle between pause and play
 	if (this.paused) {
-		this.logger.log("handleDblcClick: PLAY the video!",	this.logger.levelsEnum.VERBOSE);
+		this.logger.log("handleDblcClick: PLAY the video!");
 		this.playVideo();
 	}
 	else {
-		this.logger.log("handleDblcClick: PAUSE the video!", this.logger.levelsEnum.VERBOSE);
+		this.logger.log("handleDblcClick: PAUSE the video!");
 		this.pauseVideo();
 	}
 };
@@ -77,7 +76,7 @@ Videop.prototype.handleOnClick = function (e) {
 Videop.prototype.handleOnEnded = function (e) {
 
 	// The video is paused at the end
-	this.logger.log("handleOnEnded: Video has ended!",	this.logger.levelsEnum.VERBOSE);
+	this.logger.log("handleOnEnded: Video has ended!");
 	this.paused = true;
 };
 
@@ -89,8 +88,7 @@ Videop.prototype.handleOnClickSeek = function(relNewPos) {
 
 	// Pause and move.
 	this.pauseVideo();
-	this.logger.log("handleOnSeek: User requests video at relNewPos=" + relNewPos,
-		this.logger.levelsEnum.VERBOSE);
+	this.logger.log("handleOnSeek: User requests video at relNewPos=" + relNewPos);
 	var newTime = this.player.duration * relNewPos;
 	if (newTime > this.player.duration) { newTime = this.player.duration; }
 	this.player.currentTime = newTime;
@@ -103,8 +101,7 @@ Videop.prototype.handleGrabSeek = function(relNewPos) {
 
 	// Pause and move.
 	this.pauseVideo();
-	this.logger.log("handleOnSeek: User requests video at relNewPos=" + relNewPos,
-		this.logger.levelsEnum.VERBOSE);
+	this.logger.log("handleOnSeek: User requests video at relNewPos=" + relNewPos);
 	var newTime = this.player.duration * relNewPos;
 	if (newTime > this.player.duration) { newTime = this.player.duration; }
 	this.player.currentTime = newTime;
@@ -159,8 +156,7 @@ Playbar.prototype.positionCanvas = function () {
 	var canvasTop = Math.round(this.videop.player.offsetHeight - this.canvas.offsetHeight + 0.5);
 	this.canvas.style.top = canvasTop + "px"; 
 	this.logger.log("positionCanvas: Canvas width=" + this.canvas.width + " height=" + 
-		this.canvas.height + " top=" + this.canvas.style.top,
-		this.logger.levelsEnum.VERBOSE);
+		this.canvas.height + " top=" + this.canvas.style.top);
 
 };
 
@@ -197,9 +193,8 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 
 	// We add some tolerance so that it is easier to grab
 	this.grabTolerance = this.brushWidth * 3;
-	this.logger.log("Playhead brushWidth=" + this.brushWidth, this.logger.levelsEnum.VERBOSE);
-	this.logger.log("Playhead grab tolerance=" + this.grabTolerance, 
-		this.logger.levelsEnum.VERBOSE);
+	this.logger.log("Playhead brushWidth=" + this.brushWidth);
+	this.logger.log("Playhead grab tolerance=" + this.grabTolerance);
 
 	// As this is the first draw, the last position is non-existent.
 	// Nobody is grabbing the playhead, and was not painted 'bold'
@@ -241,7 +236,7 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 	if (relPosition >= 0) {
 		xPos = Math.round(this.playbar.canvas.width * relPosition);
 		this.logger.log("drawHead relative placement req, calculated pos to be =" + xPos +
-			" bold: " + bold, this.logger.levelsEnum.VERBOSE); 
+			" bold: " + bold); 
 	}
 	if (absPosition >= 0) {
 		xPos = absPosition - this.playbar.canvas.getBoundingClientRect().left;
@@ -250,7 +245,7 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 			xPos =  this.playbar.canvas.width - this.brushWidth;
 		}
 		this.logger.log("drawHead absolute placement req, calculated pos to be =" + xPos +
-			" bold: " + bold, this.logger.levelsEnum.VERBOSE); 
+			" bold: " + bold); 
 	}
 
 	// If at the end, correct as we need to consider the brush
@@ -267,7 +262,7 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 	// and the repaint is not being forced, i.e. not a repaint from a refresh, do nothing!
 	if (xPos == this.xPosLast && bold == this.boldLast && force == false) { 
 		this.logger.log("drawHead, nothing new to draw xPos=" + xPos + ", bold=" +
-			bold +  ", returning.", this.logger.levelsEnum.VERBOSE); 
+			bold +  ", returning."); 
 		return;
 	}
 	
@@ -275,15 +270,14 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 	// First delete the previous position of the playbar, if any
 	if (this.xPosLast != -1) {
 		this.canvasC.clearRect(this.xPosLast,0,this.brushWidth,this.playbar.canvas.height);		
-		this.logger.log("Deleted playbar at x=" + this.xPosLast, 
-			this.logger.levelsEnum.VERBOSE);
+		this.logger.log("Deleted playbar at x=" + this.xPosLast);
 	}
 
 	// Now draw the new one
 	if (bold) { this.canvasC.fillStyle = this.playHeadStyleBold; }
 		else { this.canvasC.fillStyle = this.playHeadStyle; }
 	this.logger.log("Drawing playbar at x=" + xPos + " style:" + this.canvasC.fillStyle +
-		" grabbed: " + this.grabbed, this.logger.levelsEnum.VERBOSE);
+		" grabbed: " + this.grabbed);
 	this.canvasC.fillRect(xPos,0,this.brushWidth,this.playbar.canvas.height);
 
 
@@ -312,14 +306,13 @@ PlayHead.prototype.isDraggable = function(xMousePos) {
 	var retVal = (xMousePos >= lbound) && (xMousePos <= ubound);
 
 	this.logger.log("isDraggable, current=" + xMousePos + " vs, prev=" + this.xPosLast + 
-		", tolerance=" + this.grabTolerance + " grabable playhead: " + retVal, 
-		this.logger.levelsEnum.VERBOSE);
+		", tolerance=" + this.grabTolerance + " grabable playhead: " + retVal);
 	return retVal;
 };
 
 PlayHead.prototype.handleMouseOver = function(e) {
 
-	this.logger.log("handleMouseOver", this.logger.levelsEnum.VERBOSE);
+	this.logger.log("handleMouseOver");
 
 	// If the user hovers above the playhead, we change it to show it selectable...
 	if (this.isDraggable(e.pageX)) {
@@ -329,27 +322,25 @@ PlayHead.prototype.handleMouseOver = function(e) {
 
 PlayHead.prototype.handleMouseOut = function(e) {
 
-	this.logger.log("handleMouseOut", this.logger.levelsEnum.VERBOSE);
+	this.logger.log("handleMouseOut");
 		this.grabbed = false; // User looses the grab
 		this.drawHead(-1, -1, false); // Selection is lost, but playhead stays still
 };
 
 PlayHead.prototype.handleOnMouseDown = function(e) {
-	this.logger.log("handleOnMouseDown", this.logger.levelsEnum.VERBOSE);
+	this.logger.log("handleOnMouseDown");
 	if (this.isDraggable(e.pageX)) {
 		this.drawHead(-1, -1, true); // Tolerance might move playbar, just make it bold.
 		this.grabbed = true;
 		this.pausedBeforeGrab = this.playbar.videop.paused;
-		this.logger.log("handleMouseDown, the user grabbed the playbar!", 
-			this.logger.levelsEnum.VERBOSE);
+		this.logger.log("handleMouseDown, the user grabbed the playbar!");
 	}
 };
 
 PlayHead.prototype.handleOnMouseUp = function(e) {
-	this.logger.log("handleOnMouseUp", this.logger.levelsEnum.VERBOSE);
+	this.logger.log("handleOnMouseUp");
 	if (this.grabbed) {
-		this.logger.log("handleOnMouseUp, the user released the playbar!", 
-			this.logger.levelsEnum.VERBOSE);
+		this.logger.log("handleOnMouseUp, the user released the playbar!");
 		this.grabbed = false; // no longer grabbing it
 		this.drawHead(-1, e.pageX, false);
 		var relNewPos = e.pageX / this.playbar.canvas.width;
@@ -360,7 +351,7 @@ PlayHead.prototype.handleOnMouseUp = function(e) {
 };
 
 PlayHead.prototype.handleOnClick = function(e) {
-	this.logger.log("handleOnClick", this.logger.levelsEnum.VERBOSE);
+	this.logger.log("handleOnClick");
 	this.grabbed = false; // no longer grabbing it, if we were grabbing it
 	this.drawHead(-1, e.pageX, false);
 	var relNewPos = e.pageX / this.playbar.canvas.width;

@@ -15,17 +15,17 @@ function Tracker(videop, playbar, logger) {
 
 	// We create a timer to update the playhead location. 
 	// Timer remains off till play begins... (if paused we will later shut it off)
-	this.logger.log("Tracker constructor called! Creating timer.",	this.logger.levelsEnum.VERBOSE);
+	this.logger.log("Tracker constructor called! Creating timer.");
 	this.headTimer = new Timer(100, this.updateHead.bind(this), this.logger);
 }; 
 
 Tracker.prototype.playing = function () {
-	this.logger.log("Tracker! Starting head timer as play is in progress.",	this.logger.levelsEnum.VERBOSE);
+	this.logger.log("Tracker! Starting head timer as play is in progress.");
 	this.headTimer.start();
 };
 
 Tracker.prototype.paused = function () {
-	this.logger.log("TTracker! Stopping head timer as video is paused.",	this.logger.levelsEnum.VERBOSE);
+	this.logger.log("TTracker! Stopping head timer as video is paused.");
 	this.headTimer.stop();
 };
 
@@ -54,8 +54,7 @@ Tracker.prototype.updateStats = function (action) {
 		var statsBucketStr = this.statsBucket.toString();
 		this.stats[statsBucketStr] = entry;
 		
-		this.logger.log("updateStats: New record!! Entry=" + statsBucketStr, 
-			this.logger.levelsEnum.VERBOSE);
+		this.logger.log("updateStats: New record!! Entry=" + statsBucketStr);
 		this.statsBucket++;
 
 		// Now, clear deltaStart
@@ -74,7 +73,7 @@ Tracker.prototype.updateHead = function () {
 	var newRelPos = (this.videop.player.currentTime / this.videop.player.duration);
 
 	this.logger.log("updateHead: Playing in progress. rel new position of playhead= " +
-		newRelPos, this.logger.levelsEnum.VERBOSE);
+		newRelPos);
 
 	this.videop.playbar.playHead.drawHead(newRelPos, -1, null);
 	

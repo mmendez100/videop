@@ -19,8 +19,7 @@ function Timer(interval, callback, logger)
     // Javascript timer ID
     this.timerId = -1;
 
-	this.logger.log("Timer constructor: New Timer Ready but off!!",
-		this.logger.levelsEnum.VERBOSE);
+	this.logger.log("Timer constructor: New Timer Ready but off!!");
        
 };
 
@@ -36,8 +35,7 @@ Timer.prototype.start = function()
    	// OK, start it
     this.enabled = true;
 	  this.timerID = setInterval(this.callback, this.interval);
-    this.logger.log("Started timer. Interval=" + this.interval + ", timerId=" + this.timerID,
-		this.logger.levelsEnum.VERBOSE);        
+    this.logger.log("Started timer. Interval=" + this.interval + ", timerId=" + this.timerID);        
 };
     
 // Function: Stops the timer
@@ -50,7 +48,6 @@ Timer.prototype.stop = function()
     }             
     this.enabled = false;
     clearInterval(this.timerId);
-    this.logger.log("Stopped timer. timerId=" + this.timerID,
-		this.logger.levelsEnum.VERBOSE); 
+    this.logger.log("Stopped timer. timerId=" + this.timerID); 
 };
 

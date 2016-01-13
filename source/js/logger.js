@@ -14,6 +14,7 @@ Logger.prototype.levelsEnum = Object.freeze({SILENT : 0, MEDIUM : -1, VERBOSE : 
 // Custom level setter
 Logger.prototype.setLevel = function(level) {
 
+
 	if (level <= this.levelsEnum.SILENT && level >= this.levelsEnum.VERBOSE) {
 		this.level = level;
 		console.log ("Logger level set to " + this.level);
@@ -27,6 +28,12 @@ Logger.prototype.setLevel = function(level) {
 
 // A function used to log
 Logger.prototype.log = function(message,writeLevel) {
+
+	// No need to specify VERBOSE, assume if writeLevel is missing
+	if (typeof writeLevel == 'undefined') {
+		writeLevel = this.levelsEnum.VERBOSE;
+	}
+
 	if (writeLevel >= this.level) console.log (message);	
 };
 
