@@ -24,7 +24,7 @@ Stats.prototype.actionEnum = Object.freeze(
 
 Stats.prototype.entryEnum = Object.freeze(
 								{
-									FINAL : {name: "FINAL"},
+									FINALIZED : {name: "FINALIZED"},
 									IN_PROGRESS : {name: "IN_PROGRESS"}
 								});
 
@@ -80,7 +80,7 @@ Stats.prototype.logInterval = function (action) {
 		oldEntry = this.table.pop();
 	
 		// Finalize the entry
-		oldEntry.update(this.entryEnum.FINAL);
+		oldEntry.update(this.entryEnum.FINALIZED);
 
 		// Add it back to the table
 		this.table.push(oldEntry);
@@ -128,14 +128,11 @@ EntryFactory.prototype.buildEntry = function (curType)
 	// Check, a new entry must be of type IN_PROGRESS
 	this.logger.assert(curType == this.stats.entryEnum.IN_PROGRESS);  
 
-	// OK, now compute a more accurate start time based on the relative position of the playhead
-	var accurateStart = this.videop.playbar.playHead.getPreciseVideoTime();
-
 	// ...but also get the 1 second less accurate currentTime, just to have it
 	var videoStart = this.videop.player.currentTime;
 
 	// Finally, build the entry!
-	var entry = new Entry(this.stats, this.entryID++, curType, accurateStart, videoStart, this.logger);
+	var entry = new Entry(this.stats, this.entryID++, curType, videoStart, this.logger);
 
 	this.logger.log(entry.getHeader());
 	this.logger.log(entry.toString());
@@ -143,33 +140,26 @@ EntryFactory.prototype.buildEntry = function (curType)
 };
 
 
-function Entry (stats, ID, curType, accurateStart, videoStart, logger)
+function Entry (stats, ID, curType, videoStart, logger)
 {
 	this.stats = stats;
 	this.logger = logger;
 	this.ID = ID;
 	this.curType = curType;
-	this.accurateStart = accurateStart;
-	this.accurateStop = -1;
 	this.delta = -1;
 	this.videoStart = videoStart;
 	this.videoStop = -1;
-	this.videoApproxDelta = -1;
 };
 
 // Update and close this entry / video interval
 Entry.prototype.update = function (curType) {
 
 	// Check, this entry must be of type IN_PROGRESS, cannot update a finalized entry!
-	this.logger.assert(this.curType !== this.stats.entryEnum.FINAL);  
+	this.logger.assert(this.curType == this.stats.entryEnum.IN_PROGRESS);  
 
-	// OK, now compute a more accurate stop time based on the relative position of the playhead
-	this.accurateStop = this.stats.videop.playbar.playHead.getPreciseVideoTime();
-	this.delta = this.accurateStop - this.accurateStart;
-
-	// ...but also get the 1 second less accurate currentTime, just to have it
+	// Figure out delta
 	this.videoStop = this.stats.videop.player.currentTime;
-	this.videoApproxDelta = this.videoStop - this.videoStart;
+	this.delta = this.videoStop - this.videoStart;
 
 	// Finally, update the entry!
 	this.curType = curType;
@@ -182,20 +172,17 @@ Entry.prototype.update = function (curType) {
 
 Entry.prototype.getHeader = function () {
 
-	return "Seg#\tType:\tStart(mS)\tStop(mS)\tDelta(mS)\tVideoStart(s)\tVideoStop(s)\tVideoApproxDelta(s)";
+	return "logInterval: Seg#\tType:\t\tVideoStart(s)\tVideoStop(s)\tDelta(s)";
 };
 
 
 Entry.prototype.toString = function () {
 
-	var str = this.ID + "\t\t" +
+	var str = "logInterval: " + this.ID + "\t\t" +
 		this.curType.name + "\t" +
-		this.accurateStart.toPrecision(6) + "\t\t" +
-		(this.accurateStop == -1 ? "[TBD]" : this.accurateStop.toPrecision(6)) + "\t\t" +
-		(this.delta == -1 ? "[TBD]" : this.delta.toPrecision(6)) + "\t\t" +
-		this.videoStart + "\t\t\t\t" +
-		(this.videoStop == -1 ? "[TBD]" : this.videoStop) + "\t\t\t" +
-	    (this.videoApproxDelta == -1 ? "[TBD]" : this.videoApproxDelta);
+		this.videoStart.toPrecision(6) + "\t\t\t" +
+		(this.videoStop == -1 ? "[TBD]" : this.videoStop.toPrecision(6)) + "\t\t" +
+	    (this.delta == -1 ? "[TBD]" : this.delta.toPrecision(6));
 
 	return str;
 };
