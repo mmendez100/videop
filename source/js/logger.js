@@ -34,6 +34,10 @@ Logger.prototype.log = function(message,writeLevel) {
 		writeLevel = this.levelsEnum.VERBOSE;
 	}
 
+	// If a string object, convert to primitive to print a String and
+	// not an object on the console with a string inside :)
+	if (typeof(message) == "object") { message = message.valueOf(); }
+
 	if (writeLevel >= this.level) console.log (message);	
 };
 

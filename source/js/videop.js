@@ -21,31 +21,48 @@ function Videop(videopId, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 	// Double-click plays or pauses. We start paused.
 	this.paused = true;
 	this.resizing = false;
-	this.player.onclick = this.handleOnClick.bind(this);
-	this.player.onended = this.handleOnEnded.bind(this);
-	window.onresize = this.handleOnResize.bind(this);
 
 	// We activate the object that tracks the video (and updates the playhead and viceversa)
 	this.tracker = new Tracker(this, this.playbar, this.logger);
 
+	// Attach the Stats object, which keeps track of intervals watched
+	this.stats = new Stats(this, this.logger);
+
+	// Handlers
+	this.player.onclick = this.handleOnClick.bind(this);
+	this.player.onended = this.handleOnEnded.bind(this);
+	window.onresize = this.handleOnResize.bind(this);
+
 	// Firefox, no resizes when building... do the logic.
-	if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) { 
-		this.logger.log("Firing playbar sizing logic in resize for Firefox!");
-		this.handleOnResize();
-	}
+	//if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) { 
+	//	this.logger.log("Firing playbar sizing logic in resize for Firefox!");
+	//	this.handleOnResize();
+	//}
 };
 
 Videop.prototype.pauseVideo = function () {
+	this.stats.logInterval(this.stats.actionEnum.PLAY_STOPS);
 	this.tracker.paused();
 	this.player.pause();
 	this.paused = true;
 };
 
 Videop.prototype.playVideo = function () {
+	this.stats.logInterval(this.stats.actionEnum.PLAY_BEGINS);
 	this.tracker.playing();
 	this.player.play();
 	this.paused = false;
 };
+
+Videop.prototype.handleOnEnded = function (e) {
+
+	// The video is at the end
+	this.stats.logInterval(this.stats.actionEnum.PLAY_STOPS);
+	this.tracker.paused();
+	this.paused = true;
+	this.logger.log("handleOnEnded: Video has ended!");
+};
+
 
 Videop.prototype.handleOnResize = function() {
 	
@@ -58,7 +75,6 @@ Videop.prototype.handleOnResize = function() {
 	this.playbar.handleOnResize();
 	this.resizing = false;
 };
-
 
 Videop.prototype.handleOnClick = function (e) {
 
@@ -73,12 +89,6 @@ Videop.prototype.handleOnClick = function (e) {
 	}
 };
 
-Videop.prototype.handleOnEnded = function (e) {
-
-	// The video is paused at the end
-	this.logger.log("handleOnEnded: Video has ended!");
-	this.paused = true;
-};
 
 Videop.prototype.handleOnClickSeek = function(relNewPos) {
 	// The user has requested a seek via a single click on the playbar...
@@ -225,6 +235,9 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 
 PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 
+	// force is an optional argument
+	if (typeof(force) == "undefined") { force = false; }
+
 	// No context, we are outta here!
 	if (this.canvasC == null) return;
 
@@ -286,6 +299,23 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 	this.boldLast = bold;
 
 };
+
+// Gets a more accurate video time based on the position of the playhead
+PlayHead.prototype.getPreciseVideoTime= function()
+{
+	var vidTime = -1;
+	if (this.xPosLast <= 0) { vidTime = 0; }
+	else { 
+		vidTime = this.playbar.videop.player.duration * 
+			this.xPosLast * this.playbar.canvas.width;
+	}
+
+	this.logger.log ("getPreciseVideoTime: Based on xPos=" + vidTime + 
+		" Based on html video object, " + this.playbar.videop.player.currentTime);
+
+	return vidTime;
+}
+
 
 // returns true iff the mouse is above the playbar
 PlayHead.prototype.isDraggable = function(xMousePos) {
