@@ -20,22 +20,44 @@ function Videop(videopId, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 
 	// Double-click plays or pauses. We start paused.
 	this.paused = true;
+	this.resizing = false;
 	this.player.onclick = this.handleOnClick.bind(this);
 	this.player.onended = this.handleOnEnded.bind(this);
+	window.onresize = this.handleOnResize.bind(this);
 
 	// We activate the object that tracks the video (and updates the playhead and viceversa)
 	this.tracker = new Tracker(this, this.playbar, this.logger);
 
+	// Firefox, no resizes when building... do the logic.
+	if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) { 
+		this.logger.log("Firing playbar sizing logic in resize for Firefox!",
+			 this.logger.levelsEnum.VERBOSE);
+		this.handleOnResize();
+	}
 };
 
 Videop.prototype.pauseVideo = function () {
+	this.tracker.paused();
 	this.player.pause();
 	this.paused = true;
 };
 
 Videop.prototype.playVideo = function () {
+	this.tracker.playing();
 	this.player.play();
 	this.paused = false;
+};
+
+Videop.prototype.handleOnResize = function() {
+	
+	// Only thing that needs resizing by hand is the playbar (and playhead as a side effect)
+	// Exit if nested resizes...
+	if (this.resizing) { return;}
+
+	this.logger.log("handleOnResize: Resizing!", this.logger.levelsEnum.VERBOSE);
+	this.resizing = true;
+	this.playbar.handleOnResize();
+	this.resizing = false;
 };
 
 
@@ -89,77 +111,6 @@ Videop.prototype.handleGrabSeek = function(relNewPos) {
 
 }; 
 
-// Constructor, Tracker Object
-function Tracker(videop, playbar, logger) {
-
-	this.logger = logger;
-	this.videop = videop;
-	this.playbar = playbar;
-
-	// Our stats will be stored here...
-	this.stats = {};
-	this.statsBucket = 0;
-	this.deltaStart = -1;
-	this.videoStart = -1;
-
-	// We create a timer to update the playhead location
-	this.logger.log("Tracker constructor called! Creating timer.",	this.logger.levelsEnum.VERBOSE);
-	this.headTimer = new Timer(100, this.updateHead.bind(this), this.logger);
-	this.headTimer.start();
-}; 
-
-Tracker.prototype.actionEnum = Object.freeze({PLAY_BEGINS : -1, PLAY_STOPS : -2});
-
-Tracker.prototype.updateStats = function (action) {
-
-	// Case 1: We are paused, but now playback has started
-	// Just remember when we started playing...
-	if (action == this.actionEnum.PLAY_BEGINS) {
-		this.deltaStart = new Date.now();
-		this.videoStart = this.videop.player.currentTime; 
-		return;
-	}
-
-	// Case 2: We were playing, now we are paused
-	// Calculate how much we watched...
-	if (action == this.actionEnum.PLAY_STOPS) {
-		// How long have we been playing?
-		var deltaStop = new Date.now();
-		var videoStop = this.videop.player.currentTime;
-		var playDelta = deltaStop - this.deltaStart;
-
-		// Now store this
-		var entry = new Array(this.deltaStart, deltaStop, playDelta, this.videoStart, videoStop);
-		var statsBucketStr = this.statsBucket.toString();
-		this.stats[statsBucketStr] = entry;
-		
-		this.logger.log("updateStats: New record!! Entry=" + statsBucketStr, 
-			this.logger.levelsEnum.VERBOSE);
-		this.statsBucket++;
-
-		// Now, clear deltaStart
-		this.deltaStart = NaN;
-	}
-
-}; 
-
-
-Tracker.prototype.updateHead = function () {
-
-	// First, have we been playing anything?
-	if (this.videop.paused) return;
-
-	// OK, we are playing. Update location of playhead...
-	var newRelPos = (this.videop.player.currentTime / this.videop.player.duration);
-
-	this.logger.log("updateHead: Playing in progress. rel new position of playhead= " +
-		newRelPos, this.logger.levelsEnum.VERBOSE);
-
-	this.videop.playbar.playHead.drawHead(newRelPos, -1, null);
-	
-}; 
-
-
 
 ///////// Playbar object //////////////
 
@@ -188,22 +139,37 @@ function Playbar (videop, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 	this.canvas.classList.add(playBarStyle);
 	this.canvas.style.position = "inherit";
 
-	// Now adjust the size and position at bottom, overlapping the video 
-	var playerRect = this.videop.player.getBoundingClientRect();;
-	this.canvas.width = playerRect.width; 
-	this.canvas.height = playerRect.height * playbarRatio;
-	// Calculate height of playbar making sure we never under-round...
-	var canvasTop = Math.round(this.videop.player.offsetHeight - this.canvas.offsetHeight + 0.5);
-	this.canvas.style.top = canvasTop + "px"; 
-	this.logger.log("Playbar canvas: width=" + this.canvas.width + " height=" + 
-		this.canvas.height + " top=" + this.canvas.style.top,
-		this.logger.levelsEnum.VERBOSE);
+	// Size & position the canvas, save playbar ratio in case resizing requires re-draw
+	this.playbarRatio = playbarRatio;
+	this.positionCanvas();
 
 	// Now build and draw the playhead
 	this.playHead = new PlayHead(this, playHeadStyle, playHeadStyleBold, this.logger);
 	this.logger.assert(this.playHead !== null, "Unable to create the playhead!");
+
 };
 
+Playbar.prototype.positionCanvas = function () {
+
+	// Now adjust the size and position at bottom, overlapping the video 
+	var playerRect = this.videop.player.getBoundingClientRect();;
+	this.canvas.width = playerRect.width; 
+	this.canvas.height = playerRect.height * this.playbarRatio;
+	// Calculate height of playbar making sure we never under-round...
+	var canvasTop = Math.round(this.videop.player.offsetHeight - this.canvas.offsetHeight + 0.5);
+	this.canvas.style.top = canvasTop + "px"; 
+	this.logger.log("positionCanvas: Canvas width=" + this.canvas.width + " height=" + 
+		this.canvas.height + " top=" + this.canvas.style.top,
+		this.logger.levelsEnum.VERBOSE);
+
+};
+
+
+Playbar.prototype.handleOnResize = function () {
+
+	this.positionCanvas();
+	this.playHead.drawHead (-1, -1, null, true);
+};
 
 
 
@@ -262,7 +228,7 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 	this.playbar.canvas.onclick = this.handleOnClick.bind(this);
 };
 
-PlayHead.prototype.drawHead = function(relPosition, absPosition, bold) {
+PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 
 	// No context, we are outta here!
 	if (this.canvasC == null) return;
@@ -297,8 +263,9 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold) {
 	if (relPosition == -1 && absPosition == -1) { xPos = this.xPosLast; }
 
 
-	// Now check if we really need to draw, no location and no change in styles, NOP...
-	if (xPos == this.xPosLast && bold == this.boldLast) { 
+	// Now check if we really need to draw, no location and no change in styles, 
+	// and the repaint is not being forced, i.e. not a repaint from a refresh, do nothing!
+	if (xPos == this.xPosLast && bold == this.boldLast && force == false) { 
 		this.logger.log("drawHead, nothing new to draw xPos=" + xPos + ", bold=" +
 			bold +  ", returning.", this.logger.levelsEnum.VERBOSE); 
 		return;

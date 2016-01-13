@@ -35,14 +35,19 @@ Timer.prototype.start = function()
    	} 
    	// OK, start it
     this.enabled = true;
-	this.timerID = setInterval(this.callback, this.interval);
+	  this.timerID = setInterval(this.callback, this.interval);
     this.logger.log("Started timer. Interval=" + this.interval + ", timerId=" + this.timerID,
 		this.logger.levelsEnum.VERBOSE);        
 };
     
 // Function: Stops the timer
 Timer.prototype.stop = function()
-{            
+{
+    if (this.enabled == false) {
+      this.logger.log("Timer stop for timerId=" + this.timerID + ". Timer was already stopped.",
+        this.logger.levelsEnum.INFO);
+      return;
+    }             
     this.enabled = false;
     clearInterval(this.timerId);
     this.logger.log("Stopped timer. timerId=" + this.timerID,
