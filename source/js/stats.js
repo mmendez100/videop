@@ -309,18 +309,71 @@ Tally.prototype.insertBeforeIth = function(i, time, type) {
 Tally.prototype.traverse = function () {
 
 	var depthLevel = 0;
+	var prevDepthLevel = 0;
+	var tPrev = 0;
+	var delta = 0;
+	this.viewedOnce = 0;
+	this.viewedTwice = 0;
+	this.viewedThreePlus = 0;
+
+
 	this.logger.log ("Tally: -------------------");
 
 	// Visit all nodes and print them out
 	var i = this.list;
 	while (i != null) {
+
+		// Skip dummy head and tail of linked list.
+		if (i.type == this.nodeEnum.DUMMY) { i = i.nextNode; continue; }
+
+		// Convert ith entry to a string
 		var str = i.toString();
-		if (i.type == this.nodeEnum.START) depthLevel++;
-		if (i.type == this.nodeEnum.STOP) depthLevel--;
-		this.logger.log (str + "\tViews: " + depthLevel);
+
+		// A change in depth level always occurs for each node in the list, up or down
+		if (i.type == this.nodeEnum.START) { depthLevel++; }
+		if (i.type == this.nodeEnum.STOP) { depthLevel--; }
+
+		// Calculate the time difference to assing
+		delta = i.timePoint - tPrev;
+
+		// Transitions indicate what sort of time event this is
+		if (prevDepthLevel == 1 && depthLevel == 0 
+			|| prevDepthLevel == 1 && depthLevel == 2 ) {
+			// delta contains time viewed once
+			this.viewedOnce = this.viewedOnce + delta;
+			str = str + "\tTime Delta Viewed Once:    " + prntF(delta);
+		}
+		if (prevDepthLevel == 2 && depthLevel == 1 
+			|| prevDepthLevel == 2 && depthLevel == 3) {
+			this.viewedTwice = this.viewedTwice + delta;
+			str = str + "\tTime Delta Viewed Twice:   " + prntF(delta);
+		}
+		if (prevDepthLevel >= 3 && (prevDepthLevel - depthLevel == 1)
+			|| prevDepthLevel >= 3 && (prevDepthLevel - depthLevel == 2)) {
+			this.viewedThreePlus = this.viewedThreePlus + delta;
+			str = str + "\tTime Delta Viewed Thrice+: " + prntF(delta);
+		} 
+
+		// Print it out!
+		this.logger.log (str);
+
+		// Save our last state 
+		prevDepthLevel = depthLevel;
+		tPrev = i.timePoint;
+
+		// Traverse to the next node
 		i = i.nextNode;
 	}
+
+	this.logger.log ("Tally: Cumulative Totals: ");
+
+	this.logger.log ("Tally: Video Viewed Exactly Once: " + prntF(this.viewedOnce) + "(s).");
+	this.logger.log ("Tally: Video Viewed Exactly Twice: " + prntF(this.viewedTwice) + "(s).");
+	this.logger.log ("Tally: Video Viewed at Least Three Times or More: " + prntF(this.viewedThreePlus)
+		+ "(s).");
+
 	this.logger.log ("Tally: -------------------");
+
 };
 
 
@@ -362,6 +415,7 @@ function TallyNode(timePoint, type, factory) {
 
 TallyNode.prototype.toString = function() {
 
-	return "Tally: [Node ID=" + this.ID + "] "  + " Time(s): " + this.timePoint.toPrecision(5) + "\tAction: " + this.type.name;
+	return "Tally: [Node ID=" + prntI(this.ID) + "] "  + " Time(s): " + prntF(this.timePoint) + 
+		"\tAction: " + this.type.name;
 };
 
