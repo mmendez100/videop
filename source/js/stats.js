@@ -180,7 +180,7 @@ Entry.prototype.update = function (curType) {
 
 Entry.prototype.getHeader = function () {
 
-	return "logInterval: Seg#\tType:\t\tVideoStart(s)\tVideoStop(s)\tDelta(s)";
+	return "logInterval: Seg#\tType:\t\tVideoStart(s)\t\tVideoStop(s)\tDelta(s)";
 };
 
 
@@ -188,9 +188,9 @@ Entry.prototype.toString = function () {
 
 	var str = "logInterval: " + this.ID + "\t\t" +
 		this.curType.name + "\t" +
-		this.videoStart.toPrecision(6) + "\t\t\t" +
-		(this.videoStop == -1 ? "[TBD]" : this.videoStop.toPrecision(6)) + "\t\t" +
-	    (this.delta == -1 ? "[TBD]" : this.delta.toPrecision(6));
+		prntF(this.videoStart) + "\t\t\t" +
+		(this.videoStop == -1 ? "[TBD]" : prntF(this.videoStop)) + "\t\t" +
+	    (this.delta == -1 ? "[TBD]" : prntF(this.delta));
 
 	return str;
 };

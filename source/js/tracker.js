@@ -33,7 +33,7 @@ Tracker.prototype.updateHead = function () {
 	var newRelPos = (this.videop.player.currentTime / this.videop.player.duration);
 
 	this.logger.log("updateHead: Playing in progress. rel new position of playhead= " +
-		newRelPos);
+		prntF(newRelPos));
 
 	this.videop.playbar.playHead.drawHead(newRelPos, -1, null);
 	
