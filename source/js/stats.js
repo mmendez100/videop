@@ -217,9 +217,6 @@ function Tally (stats, logger) {
 	this.viewedOnce = -1;
 	this.viewedTwice = -1;
 	this.viewedThreePlus = -1;
-	this.duration = this.stats.videop.player.duration;
-
-	this.logger.log("Tally: Duration of the video is " + this.duration);
 
 	// An init linked list that holds segments watched
 	var dummyStart = this.nodeFactory.create(Number.MAX_VALUE * -1, this.nodeEnum.DUMMY);
@@ -365,12 +362,20 @@ Tally.prototype.traverse = function () {
 		i = i.nextNode;
 	}
 
-	this.logger.log ("Tally: Cumulative Totals: ");
 
-	this.logger.log ("Tally: Video Viewed Exactly Once: " + prntF(this.viewedOnce) + "(s).");
-	this.logger.log ("Tally: Video Viewed Exactly Twice: " + prntF(this.viewedTwice) + "(s).");
-	this.logger.log ("Tally: Video Viewed at Least Three Times or More: " + prntF(this.viewedThreePlus)
-		+ "(s).");
+
+	var duration = this.stats.videop.player.duration;
+
+	this.logger.log ("Tally: Cumulative Totals: ");
+	this.logger.log ("Tally: Video Viewed Exactly Once: " + prntF(this.viewedOnce) + "(s). " +
+		prntP(this.viewedOnce / duration));
+	this.logger.log ("Tally: Video Viewed Exactly Twice: " + prntF(this.viewedTwice) + "(s). " +
+		prntP(this.viewedTwice / duration));
+	this.logger.log ("Tally: Video Viewed at Least Three Times or More: " + 
+		prntF(this.viewedThreePlus)+ "(s). " + prntP(this.viewedThreePlus / duration));
+
+	this.logger.log("Tally: Duration of the video is " + prntF(duration) + " seconds");
+
 
 	this.logger.log ("Tally: -------------------");
 
