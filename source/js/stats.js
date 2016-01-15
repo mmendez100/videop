@@ -246,7 +246,7 @@ Tally.prototype.add = function(entry) {
 	while (i != null && inserted == false) {
 		// If we have not added this entry's videoStart...
 		if (entry.curType == entry.entryEnum.COMPLETED 
-			&& entry.videoStart <= i.timePoint) {
+			&& this.isSmaller(entry.videoStart, i.timePoint, entry.curType)) {
 
 			// Build a new node
 			newNode = this.nodeFactory.create(entry.videoStart, this.nodeEnum.START);
@@ -275,7 +275,8 @@ Tally.prototype.add = function(entry) {
 	while (i != null && inserted == false) {
 		// If we have not added this entry's videoStart...
 		if (entry.curType == entry.entryEnum.START_AGGREGATED
-			&& entry.videoStop <= i.timePoint) {
+			&& this.isSmaller(entry.videoStop, i.timePoint, entry.curType)) {
+
 			// Build a new node
 			newNode = this.nodeFactory.create(entry.videoStop, this.nodeEnum.STOP);
 			
@@ -298,6 +299,15 @@ Tally.prototype.add = function(entry) {
 	}
 
 };
+
+Tally.prototype.isSmaller = function (a, b, typeA) {
+
+	// STOP always goes before START
+	if (a < b) { return true; }
+	if (a == b) { return (typeA == this.nodeEnum.STOP ? true : false); }
+	return false;
+
+}
 
 
 Tally.prototype.traverse = function () {
