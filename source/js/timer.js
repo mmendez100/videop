@@ -47,7 +47,7 @@ Timer.prototype.stop = function()
       return;
     }             
     this.enabled = false;
-    clearInterval(this.timerId);
+    clearInterval(this.timerID);
     this.logger.log("Stopped timer. timerId=" + this.timerID); 
 };
 

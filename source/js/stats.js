@@ -13,10 +13,82 @@ function Stats(videop, logger) {
 
 	// Each viewed interval will be stored here...
 	this.table = new Array();
+	this.tableCopy = null; // A copy for asynchronous peeking of stats
 
-	// A tally of times viewed, reviewed is kept here...
+	// A tally of times viewed, re-viewed is kept here...
 	this.tally = new Tally(this, this.logger);
+	this.tempTally = null; // A copy for asynchronous peeking of stats
+
+	this.logger.log("Stats constructor called! Creating stats update timer. Starts off");
+	this.peekTimer = new Timer(5000, this.peekStats.bind(this), this.logger);
+
 };
+
+// The purpose of peek Stats is to check often to detect when 25% view has been reached
+// even if the user is playing the video. 
+Stats.prototype.peekStats = function () {
+
+	// Traverse AND compute temporary stats
+	this.logger.log ("Statistics: PEEKing into stats via timer")
+	
+	// Sanity check...
+	if (this.table == null) {
+		this.logger.log ("Stats, peekStats. null table. Nothing to peek into. Returning!");
+		return;
+	}
+
+	// Mark this transition in our table to update our records
+	//this.logInterval(this.actionEnum.PLAY_PLAY);
+
+	// On the fly, get each entry in our table of intervals, copy, and create a new tally
+	this.tableCopy = new Array();
+	this.tempTally = new Tally(this, this.logger);
+
+	this.table.forEach(function(e, i, a) {
+		var entryCopy = e.copy();
+		this.logger.log ("Stats, copyTable: Inserting copyied entry " + e.ID);
+		if (entryCopy.curType == entryCopy.entryEnum.FULLY_AGGREGATED) {
+			entryCopy.curType = entryCopy.entryEnum.COMPLETED;
+			this.tableCopy.push(entryCopy);
+		}
+		if (entryCopy.curType == entryCopy.entryEnum.IN_PROGRESS) {
+			entryCopy.update(entryCopy.entryEnum.COMPLETED); // <<<< SIMULATES a PAUSE
+			this.tableCopy.push(entryCopy);
+		}
+		this.tempTally.add(entryCopy);
+	}, this);
+
+	// Now print results
+	this.logger.log ("Statistics: Current statistics:")
+	this.printTable(this.table);
+
+	this.logger.log ("Statistics: ASSUMING a PAUSE from the USER, statistics would be as follows:")
+	this.printTable(this.tableCopy);
+	this.tempTally.traverse();
+
+}
+
+
+Stats.prototype.startPeeking = function () {
+	this.logger.log("Stats! Starting peek timer as play is in progress.");
+	this.peekTimer.start();
+};
+
+Stats.prototype.stopPeeking = function () {
+	this.logger.log("Stats! Stopping peek timer as video is paused.");
+	this.peekTimer.stop();
+};
+
+
+Stats.prototype.printTable = function (table) {
+
+	this.logger.log ("----------------");
+	this.logger.log ((new Entry).getHeader("Statistics"));
+	table.forEach(function(e,i,a){
+		this.logger.log(e.toString("Statistics"));
+	}, this);
+}
+
 
 Stats.prototype.actionEnum = Object.freeze(
 								{
@@ -29,7 +101,7 @@ Stats.prototype.actionEnum = Object.freeze(
 
 Stats.prototype.logInterval = function (action) {
 
-	this.logger.log ("logInterval: Transitioning from " + this.pastAction.name + 
+	this.logger.log ("Stats: Transitioning from " + this.pastAction.name + 
 		" to " + action.name);
 	var oldEntry = null;
 
@@ -38,7 +110,7 @@ Stats.prototype.logInterval = function (action) {
 	// No video has been seen, which means we make note of the transition and exit.
 	if (this.pastAction == this.actionEnum.INIT_STATE &&
 		action == this.actionEnum.PLAY_STOPS) {
-			this.logger.log("logInterval: No time viewed. User moved the playhead before any play time"); 
+			this.logger.log("Stats: No time viewed. User moved the playhead before any play time"); 
 			// We nevertheless transition state:
 			this.pastAction = this.actionEnum.PLAY_STOPS;
 			return;
@@ -48,7 +120,7 @@ Stats.prototype.logInterval = function (action) {
 	// and remains in pause mode. No video has been seen
 	if (this.pastAction == this.actionEnum.PLAY_STOPS &&
 		action == this.actionEnum.PLAY_STOPS) {
-			this.logger.log("logInterval: No time viewed. Playhead moved in paused mode "); 
+			this.logger.log("Stats: No time viewed. Playhead moved in paused mode "); 
 			// No change in state, stopped from stopped...
 			return;
 	}
@@ -57,7 +129,7 @@ Stats.prototype.logInterval = function (action) {
 	// Make an entry, noting we started playing
 	if (action == this.actionEnum.PLAY_BEGINS) {
 
-		this.logger.log("logInterval: A view interval has been started!"); 
+		this.logger.log("Stats: A view interval has been started!"); 
 
 		// Create this interval that has begun
 		var newEntry = this.entryFactory.buildEntry();
@@ -65,7 +137,9 @@ Stats.prototype.logInterval = function (action) {
 				
 		// The state has changed, now we are in PLAY mode
 		this.pastAction = this.actionEnum.PLAY_BEGINS;
-		
+
+		// Fire timer
+		this.startPeeking();		
 		return;
 
 	}
@@ -73,7 +147,10 @@ Stats.prototype.logInterval = function (action) {
 	// Case 4: We were playing, now we are paused. Update this interval.
 	if (action == this.actionEnum.PLAY_STOPS) {
 
-		this.logger.log("logInterval: A play interval has been completed by the user!"); 
+		this.logger.log("Stats: A play interval has been completed by the user!"); 
+
+		// Stop peek timer
+		this.stopPeeking();
 
 		// Grab the top entry and verify it should be IN_PROGRESS
 		oldEntry = this.table.pop();
@@ -86,6 +163,7 @@ Stats.prototype.logInterval = function (action) {
 
 		// Add it to our total tally
 		this.tally.add(oldEntry);
+		this.printTable(this.table);
 		this.tally.traverse();
 
 		// The state is now changed to stopped
@@ -104,8 +182,8 @@ Stats.prototype.logInterval = function (action) {
 	
 	// Update the entry, still in progress
 	// echo it to the console via the log
-	this.logger.log("logInterval: An on-going view interval is being updated via timer!"); 
-	oldEntry.update(this.entryEnum.IN_PROGRESS);
+	this.logger.log("Stats: An on-going view interval is being updated via timer!"); 
+	oldEntry.update(oldEntry.entryEnum.IN_PROGRESS);
 
 	// Add it back to the table
 	this.table.push(oldEntry);
@@ -135,17 +213,17 @@ EntryFactory.prototype.buildEntry = function ()
 	// Finally, build the entry!
 	var entry = new Entry(this.stats, this.entryID++, videoStart, this.logger);
 
-	this.logger.log(entry.getHeader());
-	this.logger.log(entry.toString());
+	this.logger.log(entry.getHeader("EntryFactory"));
+	this.logger.log(entry.toString("EntryFactory"));
 	return entry;
 };
 
 Entry.prototype.entryEnum = Object.freeze(
 								{
-									IN_PROGRESS : {name: "IN_PROGRESS"}, 
-									COMPLETED : {name: "COMPLETED"},
-									START_AGGREGATED : {name: "START_AGGREGATED"},
-									FULLY_AGGREGATED : {name: "FULLY_AGGREGATED"}
+									IN_PROGRESS :      {name: "ENTRY_IN_PROGRESS"}, 
+									COMPLETED :        {name: "ENTRY_NOW_COMPLETE"},
+									START_AGGREGATED : {name: "START__AGGREGATED"},
+									FULLY_AGGREGATED : {name: "FULLY__AGGREGATED"}
 								});
 
 function Entry (stats, ID, videoStart, logger)
@@ -157,6 +235,17 @@ function Entry (stats, ID, videoStart, logger)
 	this.delta = -1;
 	this.videoStart = videoStart;
 	this.videoStop = -1;
+};
+
+Entry.prototype.copy = function () {
+
+	var theCopy = new Entry(this.stats, "Copy of " & this.ID, this.videoStart, this.logger);
+	theCopy.curType = this.curType;
+	theCopy.delta = this.delta;
+	theCopy.videoStart = this.videoStart;
+	theCopy.videoStop = this.videoStop;
+	return theCopy;
+
 };
 
 // Update and close this entry / video interval
@@ -172,22 +261,22 @@ Entry.prototype.update = function (curType) {
 	// Finally, update the entry!
 	this.curType = curType;
 
-	this.logger.log(this.getHeader(), this.logger.levelsEnum.WARN);
-	this.logger.log(this.toString(), this.logger.levelsEnum.WARN);
+	this.logger.log(this.getHeader("Entry, Update"), this.logger.levelsEnum.WARN);
+	this.logger.log(this.toString("Entry, Update"), this.logger.levelsEnum.WARN);
 	return this;
 
 };
 
-Entry.prototype.getHeader = function () {
+Entry.prototype.getHeader = function (header) {
 
-	return "logInterval: Seg#\tType:\t\tVideoStart(s)\t\tVideoStop(s)\tDelta(s)";
+	return header + ": Seg#\tType:\t\t\t\tVideoStart(s)\t\tVideoStop(s)\tDelta(s)";
 };
 
 
-Entry.prototype.toString = function () {
+Entry.prototype.toString = function (header) {
 
-	var str = "logInterval: " + this.ID + "\t\t" +
-		this.curType.name + "\t" +
+	var str = header +": " + this.ID + "\t\t" +
+		this.curType.name + "\t\t" +
 		prntF(this.videoStart) + "\t\t\t" +
 		(this.videoStop == -1 ? "[TBD]" : prntF(this.videoStop)) + "\t\t" +
 	    (this.delta == -1 ? "[TBD]" : prntF(this.delta));
@@ -218,7 +307,7 @@ function Tally (stats, logger) {
 	this.viewedTwice = -1;
 	this.viewedThreePlus = -1;
 
-	// An init linked list that holds segments watched
+	// An init linked list that holds segments watched. this.list is a member var holding the list.
 	var dummyStart = this.nodeFactory.create(Number.MAX_VALUE * -1, this.nodeEnum.DUMMY);
 	var dummyStop = this.nodeFactory.create(Number.MAX_VALUE, this.nodeEnum.DUMMY);
 	dummyStart.nextNode = dummyStop;
@@ -228,10 +317,20 @@ function Tally (stats, logger) {
 };
 
 // Add a time interval to the total time we have watched, re-watched, etc.
-Tally.prototype.add = function(entry) {
+Tally.prototype.add = function(entry, copyMode) {
 
-	// Make sure we do not add entries twice!
-	this.logger.assert(entry.curType == entry.entryEnum.COMPLETED, "Tally: Not completed entry passed to Tally.add()!")
+	this.logger.log ("Tally, add: called for entry " + entry.toString("Tally") + " copyMode:" + copyMode);
+
+	// Sanity Check! If we are working on real live data, all nodes must be COMPLETED.
+	// If we are copying, and working on old data, all nodes must be FULLY_AGGREGATED
+	if (typeof copyMode == 'undefined' || copyMode == false) {
+		this.logger.assert(entry.curType == entry.entryEnum.COMPLETED, 
+			"Tally: Not COMPLETED entry passed to Tally.add(). copyMode=" + copyMode)
+	} else {
+		// force is true
+		this.logger.assert(entry.curType == entry.entryEnum.FULLY_AGGREGATED, 
+			"Tally: Not FULLY_AGGREGATED entry passed to Tally.add(). copyMode=" + copyMode)	
+	}
 
 	// Add into our internal customized linked list holding all segments
 	var newNode = null;
@@ -314,7 +413,7 @@ Tally.prototype.traverse = function () {
 	this.viewedThreePlus = 0;
 
 
-	this.logger.log ("Tally: -------------------");
+	this.logger.log ("Statistics: -------------------");
 
 	// Visit all nodes and print them out
 	var i = this.list;
@@ -346,7 +445,7 @@ Tally.prototype.traverse = function () {
 			str = str + "\tTime Delta Viewed Twice:   " + prntF(delta);
 		}
 		if (prevDepthLevel >= 3 && (prevDepthLevel - depthLevel == 1)
-			|| prevDepthLevel >= 3 && (prevDepthLevel - depthLevel == 2)) {
+			|| prevDepthLevel >= 3 && (prevDepthLevel - depthLevel == -1)) {
 			this.viewedThreePlus = this.viewedThreePlus + delta;
 			str = str + "\tTime Delta Viewed Thrice+: " + prntF(delta);
 		} 
@@ -366,18 +465,18 @@ Tally.prototype.traverse = function () {
 
 	var duration = this.stats.videop.player.duration;
 
-	this.logger.log ("Tally: Cumulative Totals: ");
-	this.logger.log ("Tally: Video Viewed Exactly Once: " + prntF(this.viewedOnce) + "(s). " +
+	this.logger.log ("Statistics: Cumulative Totals: ");
+	this.logger.log ("Statistics: Video Viewed Exactly Once: " + prntF(this.viewedOnce) + "(s). " +
 		prntP(this.viewedOnce / duration));
-	this.logger.log ("Tally: Video Viewed Exactly Twice: " + prntF(this.viewedTwice) + "(s). " +
+	this.logger.log ("Statistics: Video Viewed Exactly Twice: " + prntF(this.viewedTwice) + "(s). " +
 		prntP(this.viewedTwice / duration));
-	this.logger.log ("Tally: Video Viewed at Least Three Times or More: " + 
+	this.logger.log ("Statistics: Video Viewed at Least Three Times or More: " + 
 		prntF(this.viewedThreePlus)+ "(s). " + prntP(this.viewedThreePlus / duration));
 
-	this.logger.log("Tally: Duration of the video is " + prntF(duration) + " seconds");
+	this.logger.log("Statistics: Duration of the video is " + prntF(duration) + " seconds");
 
 
-	this.logger.log ("Tally: -------------------");
+	this.logger.log ("Statistics: -------------------");
 
 };
 
@@ -418,9 +517,9 @@ function TallyNode(timePoint, type, factory) {
 		this.timePoint + " " + this.type.name);
 };
 
-TallyNode.prototype.toString = function() {
+TallyNode.prototype.toString = function(header) {
 
-	return "Tally: [Node ID=" + prntI(this.ID) + "] "  + " Time(s): " + prntF(this.timePoint) + 
+	return "Statistics: [Node ID=" + prntI(this.ID) + "] "  + " Time(s): " + prntF(this.timePoint) + 
 		"\tAction: " + this.type.name;
 };
 
