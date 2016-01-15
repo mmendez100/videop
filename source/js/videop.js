@@ -16,7 +16,6 @@ function Videop(videopId, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 	// Build the playbar, store it. The playbar also includes the playhead.
 	this.playbar = new Playbar(this, playBarStyle, playHeadStyle, playHeadStyleBold, 
 		playbarRatio, this.logger);
-	this.logger.assert(this.playbar !== null, "Unable to create the playbar!");
 
 	// Double-click plays or pauses. We start paused.
 	this.paused = true;

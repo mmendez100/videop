@@ -13,3 +13,10 @@ function prntF(val) {
 		minimumFractionDigits: 4, useGrouping:false});
 
 }
+
+function prntP(val) {
+
+	return ((val)*100.0).toLocaleString('en-US', {minimumIntegerDigits: 1, 
+		minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping:false}) + "%";
+
+}
