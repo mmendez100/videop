@@ -248,16 +248,7 @@ Tally.prototype.add = function(entry) {
 		if (entry.curType == entry.entryEnum.COMPLETED 
 			&& this.isSmaller(entry.videoStart, i.timePoint, entry.curType)) {
 
-			// Build a new node
-			newNode = this.nodeFactory.create(entry.videoStart, this.nodeEnum.START);
-			
-			// Attach behind the ith node
-			newNode.nextNode = i.prevNode.nextNode;	
-
-			// Place ahead of the prev node
-			i.prevNode.nextNode = newNode;
-			newNode.prevNode = i.prevNode;
-			i.prevNode = newNode;
+			this.insertBeforeIth(i, entry.videoStart, this.nodeEnum.START);
 
 			// Make note we added this videoStart for this entry (for debugging)
 			entry.curType = entry.entryEnum.START_AGGREGATED;
@@ -277,18 +268,9 @@ Tally.prototype.add = function(entry) {
 		if (entry.curType == entry.entryEnum.START_AGGREGATED
 			&& this.isSmaller(entry.videoStop, i.timePoint, entry.curType)) {
 
-			// Build a new node
-			newNode = this.nodeFactory.create(entry.videoStop, this.nodeEnum.STOP);
-			
-			// Attach in front of ith node
-			newNode.nextNode = i.prevNode.nextNode;	
+			this.insertBeforeIth(i, entry.videoStop, this.nodeEnum.STOP);
 
-			// Place ahead of the prev node
-			i.prevNode.nextNode = newNode;
-			newNode.prevNode = i.prevNode;
-			i.prevNode = newNode;
-
-			// Make note we added this videoStop for this entry (for debugging)
+			// Make note we added this videoStop
 			entry.curType = entry.entryEnum.FULLY_AGGREGATED;
 
 			// break loop
@@ -307,6 +289,20 @@ Tally.prototype.isSmaller = function (a, b, typeA) {
 	if (a == b) { return (typeA == this.nodeEnum.STOP ? true : false); }
 	return false;
 
+}
+
+Tally.prototype.insertBeforeIth = function(i, time, type) {
+
+	// Build a new node
+	var newNode = this.nodeFactory.create(time, type);
+			
+	// Attach before the ith node
+	newNode.nextNode = i.prevNode.nextNode;	
+
+	// Place after of the prev node
+	i.prevNode.nextNode = newNode;
+	newNode.prevNode = i.prevNode;
+	i.prevNode = newNode;
 }
 
 
