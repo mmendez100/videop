@@ -1,16 +1,15 @@
 .container {
 	position: relative;
 	margin: 5px;
-	padding: 5px; 
+	padding: 0; 
 }
-
 
 .videop {
 	position: absolute;
-	top 0;
-	left 0;
-	margin 0;
-	padding 0;
+	top: 0;
+	left: 0;
+	margin: 0;
+	padding: 0;
 }
 
 .playbar {
@@ -18,21 +17,9 @@
 	padding: 0;
 	cursor: pointer; 
 	background: #DEB887;
-	text-align: left; 
 	opacity: 0;
 	z-index: 10;
-	display: block;
 }
 .playbar:hover {
 	opacity: 0.8;
 }
-
-.play_time { 
-	float: left; 
-	margin: 7px 0 0 5px; 
-	font-size: 10px; 
-	font-weight: normal; 
-	font-family: Helvetica, Arial, sans-serif;  
-	line-height: 1;
-}
-

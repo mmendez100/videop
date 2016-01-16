@@ -14,6 +14,14 @@ function prntF(val) {
 
 }
 
+function prntF2(val) {
+
+	return (val).toLocaleString('en-US', {minimumIntegerDigits: 2, 
+		minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping:false});
+
+}
+
+
 function prntP(val) {
 
 	return ((val)*100.0).toLocaleString('en-US', {minimumIntegerDigits: 1, 
