@@ -1,5 +1,13 @@
 "use strict";
 
+/* The videop object is the main object of this project. It is attached via main.html to
+ * an html5 video object. 
+
+
+ */
+
+
+
 ///////// Videop object //////////////
 
 // Constructor
@@ -7,7 +15,7 @@ function Videop(videopId, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 {
 	// Utility logger, we set it up to VERBOSE for development or testing, else MEDIUM
 	this.logger = new Logger();
-	this.logger.setLevel(this.logger.levelsEnum.VERBOSE); // Make MEDIUM for Production //
+	this.logger.setLevel(this.logger.levelsEnum.MEDIUM); // Make VERBOSE for Debugging //
 
 	// We associate the html player to this instance of Videop, save it in an internal variable
 	this.player = document.getElementById(videopId);
@@ -79,11 +87,11 @@ Videop.prototype.handleOnClick = function (e) {
 
 	// Toggle between pause and play
 	if (this.paused) {
-		this.logger.log("handleDblcClick: PLAY the video!");
+		this.logger.log("handleOnClick: PLAY the video!");
 		this.playVideo();
 	}
 	else {
-		this.logger.log("handleDblcClick: PAUSE the video!");
+		this.logger.log("handleOnClick: PAUSE the video!");
 		this.pauseVideo();
 	}
 };
@@ -112,7 +120,7 @@ Videop.prototype.handleGrabSeek = function(relNewPos) {
 	this.pauseVideo();
 	this.logger.log("handleOnSeek: User requests video at relNewPos=" + relNewPos);
 	var newTime = this.player.duration * relNewPos;
-	if (newTime > this.player.duration) { newTime = this.player.duration; }
+	if (newTime > this.player.duration) { newTime = this.player.duration; } // Do not play beyond length!
 	this.player.currentTime = newTime;
 
 }; 
@@ -166,13 +174,13 @@ Playbar.prototype.positionCanvas = function () {
 	this.canvas.style.top = canvasTop + "px"; 
 	this.logger.log("positionCanvas: Canvas width=" + this.canvas.width + " height=" + 
 		this.canvas.height + " top=" + this.canvas.style.top);
-
 };
 
 
 Playbar.prototype.handleOnResize = function () {
 
 	this.positionCanvas();
+	this.playHead.resizeVidTime();
 	this.playHead.drawHead (-1, -1, null, true);
 };
 
@@ -195,6 +203,7 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 	this.playHeadStyleBold = playHeadStyleBold;
 	this.logger.assert(this.playHeadStyle != "", "No playhead style!");
 	this.logger.assert(this.playHeadStyleBold != "", "No bold playhead style!");
+	this.vidTimeFontPx = ""; // Generated later, could pass in for v2.
 
 	// We calculate the width of the playbar to 1%
 	this.brushWidth = Math.round(this.playbar.canvas.width * 0.01);
@@ -219,6 +228,8 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 		return;
 	}
 
+	this.resizeVidTime();
+
 	// Draw at the initial position at 0%
 	this.drawHead(0, -1, false);
 
@@ -230,6 +241,15 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 	this.playbar.canvas.onmouseup = this.handleOnMouseUp.bind(this);
 	this.playbar.canvas.onmousemove = this.handleOnMouseMove.bind(this);
 	this.playbar.canvas.onclick = this.handleOnClick.bind(this);
+};
+
+
+PlayHead.prototype.resizeVidTime = function () {
+
+	// Figure out sizes of the playhead's videotime
+	this.vidTimeFontPx = Math.round (this.playbar.canvas.height * 0.8) + "px sans-serif" ; // 80%
+	this.canvasC.font = this.vidTimeFontPx;
+
 };
 
 PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
@@ -283,6 +303,9 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 	if (this.xPosLast != -1) {
 		this.canvasC.clearRect(this.xPosLast,0,this.brushWidth,this.playbar.canvas.height);		
 		this.logger.log("Deleted playbar at x=" + this.xPosLast);
+
+		// Now unpaint the time (revisit, avoid extra padding...)
+		this.canvasC.clearRect(this.xPosLast,0,this.vidTimeTextWidth * 4,this.playbar.canvas.height);	
 	}
 
 	// Now draw the new one
@@ -292,22 +315,24 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 		" grabbed: " + this.grabbed);
 	this.canvasC.fillRect(xPos,0,this.brushWidth,this.playbar.canvas.height);
 
-
 	// Save this drawing as the old position
 	this.xPosLast = xPos;
 	this.boldLast = bold;
 
+	// Now paint the time
+	var vidTime = prntF2(this.playbar.videop.player.currentTime);
+	this.canvasC.fillStyle = 'white';
+	this.vidTimeTextWidth = this.canvasC.measureText (vidTime, xPos + this.brushWidth * 3, 
+		this.playbar.canvas.height - Math.round(this.playbar.canvas.height * .20)).width;
+	this.canvasC.fillText (vidTime, xPos + this.brushWidth * 3, 
+		this.playbar.canvas.height - Math.round(this.playbar.canvas.height * .20));
+
 };
 
 // Gets a more accurate video time based on the position of the playhead
-PlayHead.prototype.getPreciseVideoTime= function()
+PlayHead.prototype.drawTime = function()
 {
-	var vidTime = -1;
-	if (this.xPosLast <= 0) { vidTime = 0; }
-	else { 
-		vidTime = this.playbar.videop.player.duration * 
-			this.xPosLast * this.playbar.canvas.width;
-	}
+	var vidTime = this.playbar.videop.player.currentTime;
 
 	this.logger.log ("getPreciseVideoTime: Based on xPos=" + vidTime + 
 		" Based on html video object, " + this.playbar.videop.player.currentTime);
@@ -393,6 +418,7 @@ PlayHead.prototype.handleOnMouseMove = function(e) {
 	if (this.grabbed) {
 		this.drawHead(-1, e.pageX, true);
 		var relNewPos = e.pageX / this.playbar.canvas.width;
+		this.logger.log ("Playhead, user wants to move grabbed head to rel position=" + relNewPos);
 		this.playbar.videop.handleGrabSeek(relNewPos);
 		return;
 	}
@@ -409,12 +435,6 @@ PlayHead.prototype.handleOnMouseMove = function(e) {
 
 
 
-////////////////// Main ////////////////////
-
-
-// We attach an instance of class Videop to the existing video player.
-// specifying the playbar's CSS style and its size or ratio ("thickness")
-var videoPlayer1 = new Videop("video1", "playbar", "#FFD700", "#8B0000", 0.08);
 
 
 
