@@ -1,5 +1,13 @@
 "use strict";
 
+/* The videop object is the main object of this project. It is attached via main.html to
+ * an html5 video object. 
+
+
+ */
+
+
+
 ///////// Videop object //////////////
 
 // Constructor
@@ -7,7 +15,7 @@ function Videop(videopId, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 {
 	// Utility logger, we set it up to VERBOSE for development or testing, else MEDIUM
 	this.logger = new Logger();
-	this.logger.setLevel(this.logger.levelsEnum.VERBOSE); // Make MEDIUM for Production //
+	this.logger.setLevel(this.logger.levelsEnum.MEDIUM); // Make VERBOSE for Debugging //
 
 	// We associate the html player to this instance of Videop, save it in an internal variable
 	this.player = document.getElementById(videopId);

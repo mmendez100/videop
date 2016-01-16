@@ -1,5 +1,37 @@
 "use strict";
 
+// The file stats contains the main and auxiliary objects that keep track of the time
+// viewed statistics.
+
+// The Stats object is the main object, where the rest of its auxiliary classes 'hang.
+// Stats keeps a table of all segments viewed, in this.table(). Whenever there is a 
+// change of STATE (i.e. when the user pauses or starts the video) the function
+// logInterval() makes a new entry, or updates an existing entry. The Entry class
+// takes care of specifying each entry, storing its internal states (completed, in-progress
+// for entries that have a START but not a STOP time, for example) and updating them
+// via update() with time stamps based on the video when it is time to update() them.
+//
+// The Tally via its add() method takes this table and 'flattens' it out, and interleaves all
+// segments that overlap (or not), and then uses its method traverse() to derive all
+// time statistics (video times for viewed once, twice, etc). The Tally object uses
+// a doubly-linked list, and makes sure via its own comparison routine isBigger that
+// each START is always followed by its OWN event even though they can occur with the
+// same video signature (as it happens when the user starts and stops the video). The
+// Tally object's linked list has as its entries instances of TallyNode. Just as with 
+// the Entry class, TallyNode has the required methods to print header and contents
+// upon request.
+// 
+// Because normally it would be impossible to determine if the user exceeded a view
+// threshold, of say 25% of a given video seen twice, till the user PAUSED the video,
+// a timer, enclosed in its class Timer, fires the peekStats() callback of Stats
+// every five seconds. peekStats() copies the Entries table to a temporary table
+// and executes a temporary Tally() --simulating the user pausing the video. By doing
+// this we can derive the stats as they exist right now and do not need to wait till
+// the user pauses.
+//
+// For efficiency, the timer is stopped when the user has stopped the video. The additions
+// to Entry and to Tally are all linear O(n), and done without recursion, where n is the
+// number of time segments created by the user by starting or stopping the video.
 
 function Stats(videop, logger) {
 
@@ -29,7 +61,7 @@ function Stats(videop, logger) {
 Stats.prototype.peekStats = function () {
 
 	// Traverse AND compute temporary stats
-	this.logger.log ("Statistics: PEEKing into stats via timer")
+	this.logger.log ("Statistics: PEEKing into stats via timer", this.logger.levelsEnum.MEDIUM);
 	
 	// Sanity check...
 	if (this.table == null) {
@@ -59,10 +91,11 @@ Stats.prototype.peekStats = function () {
 	}, this);
 
 	// Now print results
-	this.logger.log ("Statistics: Current statistics:")
+	this.logger.log ("Statistics: Current statistics:", this.logger.levelsEnum.MEDIUM);
 	this.printTable(this.table);
 
-	this.logger.log ("Statistics: ASSUMING a PAUSE from the USER, statistics would be as follows:")
+	this.logger.log ("Statistics: ASSUMING a PAUSE from the USER, statistics would be as follows:",
+		this.logger.levelsEnum.MEDIUM);
 	this.printTable(this.tableCopy);
 	this.tempTally.traverse();
 
@@ -82,10 +115,10 @@ Stats.prototype.stopPeeking = function () {
 
 Stats.prototype.printTable = function (table) {
 
-	this.logger.log ("----------------");
-	this.logger.log ((new Entry).getHeader("Statistics"));
+//	this.logger.log ("----------------" , this.logger.levelsEnum.MEDIUM);
+	this.logger.log ((new Entry).getHeader("Statistics"), this.logger.levelsEnum.MEDIUM);
 	table.forEach(function(e,i,a){
-		this.logger.log(e.toString("Statistics"));
+		this.logger.log(e.toString("Statistics"), this.logger.levelsEnum.MEDIUM);
 	}, this);
 }
 
@@ -413,7 +446,7 @@ Tally.prototype.traverse = function () {
 	this.viewedThreePlus = 0;
 
 
-	this.logger.log ("Statistics: -------------------");
+	this.logger.log ("Statistics: -------------------", this.logger.levelsEnum.MEDIUM);
 
 	// Visit all nodes and print them out
 	var i = this.list;
@@ -451,7 +484,7 @@ Tally.prototype.traverse = function () {
 		} 
 
 		// Print it out!
-		this.logger.log (str);
+		this.logger.log (str, this.logger.levelsEnum.MEDIUM);
 
 		// Save our last state 
 		prevDepthLevel = depthLevel;
@@ -465,29 +498,28 @@ Tally.prototype.traverse = function () {
 
 	var duration = this.stats.videop.player.duration;
 
-	this.logger.log ("Statistics: Cumulative Totals: ");
+	this.logger.log ("Statistics: Cumulative Totals: ", this.logger.levelsEnum.MEDIUM);
 	this.logger.log ("Statistics: Video Viewed Exactly Once: " + prntF(this.viewedOnce) + "(s). " +
-		prntP(this.viewedOnce / duration));
+		prntP(this.viewedOnce / duration), this.logger.levelsEnum.MEDIUM);
 	this.logger.log ("Statistics: Video Viewed Exactly Twice: " + prntF(this.viewedTwice) + "(s). " +
-		prntP(this.viewedTwice / duration));
+		prntP(this.viewedTwice / duration), this.logger.levelsEnum.MEDIUM);
 
 	var oneTimeOrMore = this.viewedOnce + this.viewedTwice + this.viewedThreePlus;
 	this.logger.log ("Statistics: Video Viewed One Time or More: " + prntF(oneTimeOrMore) + "(s). " +
-		prntP(oneTimeOrMore / duration));
+		prntP(oneTimeOrMore / duration), this.logger.levelsEnum.MEDIUM);
 	
 	var twoTimesOrMore = this.viewedTwice + this.viewedThreePlus;
 	this.logger.log ("Statistics: Video Viewed Two Times or More: " + prntF(twoTimesOrMore) + "(s). " +
-		prntP(twoTimesOrMore / duration));
+		prntP(twoTimesOrMore / duration), this.logger.levelsEnum.MEDIUM);
 
 	this.logger.log ("Statistics: Video Viewed Three Times or More: " + 
-		prntF(this.viewedThreePlus)+ "(s). " + prntP(this.viewedThreePlus / duration));
+		prntF(this.viewedThreePlus)+ "(s). " + prntP(this.viewedThreePlus / duration),
+		this.logger.levelsEnum.MEDIUM);
 
+	this.logger.log("Statistics: Duration of the video is " + prntF(duration) + " seconds",
+		this.logger.levelsEnum.MEDIUM);
 
-
-	this.logger.log("Statistics: Duration of the video is " + prntF(duration) + " seconds");
-
-
-	this.logger.log ("Statistics: -------------------");
+	this.logger.log ("Statistics: -------------------", this.logger.levelsEnum.MEDIUM);
 
 };
 
