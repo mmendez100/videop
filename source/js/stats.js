@@ -61,7 +61,7 @@ function Stats(videop, logger) {
 Stats.prototype.peekStats = function () {
 
 	// Traverse AND compute temporary stats
-	this.logger.log ("Statistics: PEEKing into stats via timer")
+	this.logger.log ("Statistics: PEEKing into stats via timer", this.logger.levelsEnum.MEDIUM);
 	
 	// Sanity check...
 	if (this.table == null) {
@@ -91,10 +91,11 @@ Stats.prototype.peekStats = function () {
 	}, this);
 
 	// Now print results
-	this.logger.log ("Statistics: Current statistics:")
+	this.logger.log ("Statistics: Current statistics:", this.logger.levelsEnum.MEDIUM);
 	this.printTable(this.table);
 
-	this.logger.log ("Statistics: ASSUMING a PAUSE from the USER, statistics would be as follows:")
+	this.logger.log ("Statistics: ASSUMING a PAUSE from the USER, statistics would be as follows:",
+		this.logger.levelsEnum.MEDIUM);
 	this.printTable(this.tableCopy);
 	this.tempTally.traverse();
 
@@ -114,10 +115,10 @@ Stats.prototype.stopPeeking = function () {
 
 Stats.prototype.printTable = function (table) {
 
-	this.logger.log ("----------------");
-	this.logger.log ((new Entry).getHeader("Statistics"));
+//	this.logger.log ("----------------" , this.logger.levelsEnum.MEDIUM);
+	this.logger.log ((new Entry).getHeader("Statistics"), this.logger.levelsEnum.MEDIUM);
 	table.forEach(function(e,i,a){
-		this.logger.log(e.toString("Statistics"));
+		this.logger.log(e.toString("Statistics"), this.logger.levelsEnum.MEDIUM);
 	}, this);
 }
 
@@ -445,7 +446,7 @@ Tally.prototype.traverse = function () {
 	this.viewedThreePlus = 0;
 
 
-	this.logger.log ("Statistics: -------------------");
+	this.logger.log ("Statistics: -------------------", this.logger.levelsEnum.MEDIUM);
 
 	// Visit all nodes and print them out
 	var i = this.list;
@@ -483,7 +484,7 @@ Tally.prototype.traverse = function () {
 		} 
 
 		// Print it out!
-		this.logger.log (str);
+		this.logger.log (str, this.logger.levelsEnum.MEDIUM);
 
 		// Save our last state 
 		prevDepthLevel = depthLevel;
@@ -497,18 +498,28 @@ Tally.prototype.traverse = function () {
 
 	var duration = this.stats.videop.player.duration;
 
-	this.logger.log ("Statistics: Cumulative Totals: ");
+	this.logger.log ("Statistics: Cumulative Totals: ", this.logger.levelsEnum.MEDIUM);
 	this.logger.log ("Statistics: Video Viewed Exactly Once: " + prntF(this.viewedOnce) + "(s). " +
-		prntP(this.viewedOnce / duration));
+		prntP(this.viewedOnce / duration), this.logger.levelsEnum.MEDIUM);
 	this.logger.log ("Statistics: Video Viewed Exactly Twice: " + prntF(this.viewedTwice) + "(s). " +
-		prntP(this.viewedTwice / duration));
-	this.logger.log ("Statistics: Video Viewed at Least Three Times or More: " + 
-		prntF(this.viewedThreePlus)+ "(s). " + prntP(this.viewedThreePlus / duration));
+		prntP(this.viewedTwice / duration), this.logger.levelsEnum.MEDIUM);
 
-	this.logger.log("Statistics: Duration of the video is " + prntF(duration) + " seconds");
+	var oneTimeOrMore = this.viewedOnce + this.viewedTwice + this.viewedThreePlus;
+	this.logger.log ("Statistics: Video Viewed One Time or More: " + prntF(oneTimeOrMore) + "(s). " +
+		prntP(oneTimeOrMore / duration), this.logger.levelsEnum.MEDIUM);
+	
+	var twoTimesOrMore = this.viewedTwice + this.viewedThreePlus;
+	this.logger.log ("Statistics: Video Viewed Two Times or More: " + prntF(twoTimesOrMore) + "(s). " +
+		prntP(twoTimesOrMore / duration), this.logger.levelsEnum.MEDIUM);
 
+	this.logger.log ("Statistics: Video Viewed Three Times or More: " + 
+		prntF(this.viewedThreePlus)+ "(s). " + prntP(this.viewedThreePlus / duration),
+		this.logger.levelsEnum.MEDIUM);
 
-	this.logger.log ("Statistics: -------------------");
+	this.logger.log("Statistics: Duration of the video is " + prntF(duration) + " seconds",
+		this.logger.levelsEnum.MEDIUM);
+
+	this.logger.log ("Statistics: -------------------", this.logger.levelsEnum.MEDIUM);
 
 };
 
@@ -554,4 +565,3 @@ TallyNode.prototype.toString = function(header) {
 	return "Statistics: [Node ID=" + prntI(this.ID) + "] "  + " Time(s): " + prntF(this.timePoint) + 
 		"\tAction: " + this.type.name;
 };
-
