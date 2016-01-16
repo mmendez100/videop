@@ -112,7 +112,7 @@ Videop.prototype.handleGrabSeek = function(relNewPos) {
 	this.pauseVideo();
 	this.logger.log("handleOnSeek: User requests video at relNewPos=" + relNewPos);
 	var newTime = this.player.duration * relNewPos;
-	if (newTime > this.player.duration) { newTime = this.player.duration; }
+//	if (newTime > this.player.duration) { newTime = this.player.duration; }
 	this.player.currentTime = newTime;
 
 }; 
@@ -393,6 +393,7 @@ PlayHead.prototype.handleOnMouseMove = function(e) {
 	if (this.grabbed) {
 		this.drawHead(-1, e.pageX, true);
 		var relNewPos = e.pageX / this.playbar.canvas.width;
+		this.logger.log ("Playhead, user wants to move grabbed head to rel position=" + relNewPos);
 		this.playbar.videop.handleGrabSeek(relNewPos);
 		return;
 	}

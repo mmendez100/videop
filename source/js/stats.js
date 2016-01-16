@@ -470,8 +470,19 @@ Tally.prototype.traverse = function () {
 		prntP(this.viewedOnce / duration));
 	this.logger.log ("Statistics: Video Viewed Exactly Twice: " + prntF(this.viewedTwice) + "(s). " +
 		prntP(this.viewedTwice / duration));
-	this.logger.log ("Statistics: Video Viewed at Least Three Times or More: " + 
+
+	var oneTimeOrMore = this.viewedOnce + this.viewedTwice + this.viewedThreePlus;
+	this.logger.log ("Statistics: Video Viewed One Time or More: " + prntF(oneTimeOrMore) + "(s). " +
+		prntP(oneTimeOrMore / duration));
+	
+	var twoTimesOrMore = this.viewedTwice + this.viewedThreePlus;
+	this.logger.log ("Statistics: Video Viewed Two Times or More: " + prntF(twoTimesOrMore) + "(s). " +
+		prntP(twoTimesOrMore / duration));
+
+	this.logger.log ("Statistics: Video Viewed Three Times or More: " + 
 		prntF(this.viewedThreePlus)+ "(s). " + prntP(this.viewedThreePlus / duration));
+
+
 
 	this.logger.log("Statistics: Duration of the video is " + prntF(duration) + " seconds");
 
