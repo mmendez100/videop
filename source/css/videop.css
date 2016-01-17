@@ -1,25 +1,25 @@
 .container {
-	position: relative;
-	margin: 5px;
-	padding: 0; 
+    position: relative;
+    margin: 5px;
+    padding: 0; 
 }
 
 .videop {
-	position: absolute;
-	top: 0;
-	left: 0;
-	margin: 0;
-	padding: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
 }
 
 .playbar {
-	margin: 0;
-	padding: 0;
-	cursor: pointer; 
-	background: #DEB887;
-	opacity: 0;
-	z-index: 10;
+    margin: 0;
+    padding: 0;
+    cursor: pointer; 
+    background: #DEB887;
+    opacity: 0;
+    z-index: 10;
 }
 .playbar:hover {
-	opacity: 0.8;
+    opacity: 0.8;
 }
