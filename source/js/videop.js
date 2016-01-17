@@ -45,8 +45,7 @@ function Videop(videopId, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 	//	this.logger.log("Firing playbar sizing logic in resize for Firefox!");
 	//	this.handleOnResize();
 	//}
-};
-
+}
 Videop.prototype.pauseVideo = function () {
 	this.stats.logInterval(this.stats.actionEnum.PLAY_STOPS);
 	this.tracker.paused();
@@ -161,12 +160,12 @@ function Playbar (videop, playBarStyle, playHeadStyle, playHeadStyleBold, playba
 	this.playHead = new PlayHead(this, playHeadStyle, playHeadStyleBold, this.logger);
 	this.logger.assert(this.playHead !== null, "Unable to create the playhead!");
 
-};
-
+}
 Playbar.prototype.positionCanvas = function () {
 
 	// Now adjust the size and position at bottom, overlapping the video 
-	var playerRect = this.videop.player.getBoundingClientRect();;
+
+	var playerRect = this.videop.player.getBoundingClientRect();
 	this.canvas.width = playerRect.width; 
 	this.canvas.height = playerRect.height * this.playbarRatio;
 	// Calculate height of playbar making sure we never under-round...
@@ -203,7 +202,11 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 	this.playHeadStyleBold = playHeadStyleBold;
 	this.logger.assert(this.playHeadStyle != "", "No playhead style!");
 	this.logger.assert(this.playHeadStyleBold != "", "No bold playhead style!");
+
+	// Stuff to print the time by the playbar
 	this.vidTimeFontPx = ""; // Generated later, could pass in for v2.
+	this.xTextLeftMargin =  this.brushWidth * 3;
+	this.xTextHor = this.playbar.canvas.height - Math.round(this.playbar.canvas.height * .20);
 
 	// We calculate the width of the playbar to 1%
 	this.brushWidth = Math.round(this.playbar.canvas.width * 0.01);
@@ -241,9 +244,7 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 	this.playbar.canvas.onmouseup = this.handleOnMouseUp.bind(this);
 	this.playbar.canvas.onmousemove = this.handleOnMouseMove.bind(this);
 	this.playbar.canvas.onclick = this.handleOnClick.bind(this);
-};
-
-
+}
 PlayHead.prototype.resizeVidTime = function () {
 
 	// Figure out sizes of the playhead's videotime
@@ -305,7 +306,7 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 		this.logger.log("Deleted playbar at x=" + this.xPosLast);
 
 		// Now unpaint the time (revisit, avoid extra padding...)
-		this.canvasC.clearRect(this.xPosLast,0,this.vidTimeTextWidth * 4,this.playbar.canvas.height);	
+		this.canvasC.clearRect(this.xPosLast,0,this.vidTimeTextWidth * 4, this.playbar.canvas.height);
 	}
 
 	// Now draw the new one
@@ -322,23 +323,10 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 	// Now paint the time
 	var vidTime = prntF2(this.playbar.videop.player.currentTime);
 	this.canvasC.fillStyle = 'white';
-	this.vidTimeTextWidth = this.canvasC.measureText (vidTime, xPos + this.brushWidth * 3, 
-		this.playbar.canvas.height - Math.round(this.playbar.canvas.height * .20)).width;
-	this.canvasC.fillText (vidTime, xPos + this.brushWidth * 3, 
-		this.playbar.canvas.height - Math.round(this.playbar.canvas.height * .20));
+	this.vidTimeTextWidth = this.canvasC.measureText (vidTime, xPos + this.xTextLeftMargin, this.xTextHor);
+	this.canvasC.fillText (vidTime, xPos + this.xTextLeftMargin, this.xTextHor);
 
 };
-
-// Gets a more accurate video time based on the position of the playhead
-PlayHead.prototype.drawTime = function()
-{
-	var vidTime = this.playbar.videop.player.currentTime;
-
-	this.logger.log ("getPreciseVideoTime: Based on xPos=" + vidTime + 
-		" Based on html video object, " + this.playbar.videop.player.currentTime);
-
-	return vidTime;
-}
 
 
 // returns true iff the mouse is above the playbar
@@ -397,7 +385,6 @@ PlayHead.prototype.handleOnMouseUp = function(e) {
 		this.logger.log("handleOnMouseUp, the user released the playbar!");
 		this.grabbed = false; // no longer grabbing it
 		this.drawHead(-1, e.pageX, false);
-		var relNewPos = e.pageX / this.playbar.canvas.width;
 
 		// Respect the user's choice. If playing before seeking, restore.
 		if (this.pausedBeforeGrab == false) this.playbar.videop.playVideo();

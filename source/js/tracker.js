@@ -22,8 +22,7 @@ function Tracker(videop, playbar, logger) {
 	// Timer remains off till play begins... (if paused we will later shut it off)
 	this.logger.log("Tracker constructor called! Creating timer.");
 	this.headTimer = new Timer(100, this.updateHead.bind(this), this.logger);
-}; 
-
+}
 Tracker.prototype.playing = function () {
 	this.logger.log("Tracker! Starting head timer as play is in progress.");
 	this.headTimer.start();

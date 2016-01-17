@@ -10,13 +10,14 @@
 function Logger() {
 	// We start with a silent, no log level 
 	this.level = this.levelsEnum.SILENT;
-};
-
+}
 // Member functions
 Logger.prototype.levelsEnum = Object.freeze(
 								{
-									SILENT : {name: "QUIET", val: 3},
-									MEDIUM : {name: "MEDIUM CHATTER", val: 2},
+									SILENT : {name: "QUIET", val: 5},
+									WARN : {name: "WARNINGS:", val:4},
+									MEDIUM : {name: "MEDIUM CHATTER", val: 3},
+									INFO : {name: "PLENTY OF CHATTER", val: 2},
 									VERBOSE : {name: "MAXIMUM CHATTER", val: 1}
 								});
 

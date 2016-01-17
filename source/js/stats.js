@@ -44,7 +44,7 @@ function Stats(videop, logger) {
 	this.entryFactory = new EntryFactory (this, videop, logger);
 
 	// Each viewed interval will be stored here...
-	this.table = new Array();
+	this.table = [];
 	this.tableCopy = null; // A copy for asynchronous peeking of stats
 
 	// A tally of times viewed, re-viewed is kept here...
@@ -54,8 +54,7 @@ function Stats(videop, logger) {
 	this.logger.log("Stats constructor called! Creating stats update timer. Starts off");
 	this.peekTimer = new Timer(5000, this.peekStats.bind(this), this.logger);
 
-};
-
+}
 // The purpose of peek Stats is to check often to detect when 25% view has been reached
 // even if the user is playing the video. 
 Stats.prototype.peekStats = function () {
@@ -73,7 +72,7 @@ Stats.prototype.peekStats = function () {
 	//this.logInterval(this.actionEnum.PLAY_PLAY);
 
 	// On the fly, get each entry in our table of intervals, copy, and create a new tally
-	this.tableCopy = new Array();
+	this.tableCopy = [];
 	this.tempTally = new Tally(this, this.logger);
 
 	this.table.forEach(function(e, i, a) {
@@ -99,7 +98,7 @@ Stats.prototype.peekStats = function () {
 	this.printTable(this.tableCopy);
 	this.tempTally.traverse();
 
-}
+};
 
 
 Stats.prototype.startPeeking = function () {
@@ -120,7 +119,7 @@ Stats.prototype.printTable = function (table) {
 	table.forEach(function(e,i,a){
 		this.logger.log(e.toString("Statistics"), this.logger.levelsEnum.MEDIUM);
 	}, this);
-}
+};
 
 
 Stats.prototype.actionEnum = Object.freeze(
@@ -207,7 +206,7 @@ Stats.prototype.logInterval = function (action) {
 
 	// Case 5 & LAST: We are playing and we continue to play... just update this entry
 	// But first, paranoid check... Are we in the right state?
-	this.logger.assert(action == this.actionEnum.PLAY_PLAY, "Coding error! Invalid state/action!!!")
+	this.logger.assert(action == this.actionEnum.PLAY_PLAY, "Coding error! Invalid state/action!!!");
 
 	// An interim interval exists, not yet completed. It should always be the last array entry
 	// Grab the top entry and verify it should be IN_PROGRESS
@@ -268,8 +267,7 @@ function Entry (stats, ID, videoStart, logger)
 	this.delta = -1;
 	this.videoStart = videoStart;
 	this.videoStop = -1;
-};
-
+}
 Entry.prototype.copy = function () {
 
 	var theCopy = new Entry(this.stats, "Copy of " & this.ID, this.videoStart, this.logger);
@@ -294,8 +292,8 @@ Entry.prototype.update = function (curType) {
 	// Finally, update the entry!
 	this.curType = curType;
 
-	this.logger.log(this.getHeader("Entry, Update"), this.logger.levelsEnum.WARN);
-	this.logger.log(this.toString("Entry, Update"), this.logger.levelsEnum.WARN);
+	this.logger.log(this.getHeader("Entry, Update"));
+	this.logger.log(this.toString("Entry, Update"));
 	return this;
 
 };
@@ -308,13 +306,11 @@ Entry.prototype.getHeader = function (header) {
 
 Entry.prototype.toString = function (header) {
 
-	var str = header +": " + this.ID + "\t\t" +
+	return (header +": " + this.ID + "\t\t" +
 		this.curType.name + "\t\t" +
 		prntF(this.videoStart) + "\t\t\t" +
 		(this.videoStop == -1 ? "[TBD]" : prntF(this.videoStop)) + "\t\t" +
-	    (this.delta == -1 ? "[TBD]" : prntF(this.delta));
-
-	return str;
+	    (this.delta == -1 ? "[TBD]" : prntF(this.delta)));
 };
 
 
@@ -347,8 +343,7 @@ function Tally (stats, logger) {
 	dummyStop.prevNode = dummyStart;
 	this.list = dummyStart;
 
-};
-
+}
 // Add a time interval to the total time we have watched, re-watched, etc.
 Tally.prototype.add = function(entry, copyMode) {
 
@@ -366,7 +361,7 @@ Tally.prototype.add = function(entry, copyMode) {
 	}
 
 	// Add into our internal customized linked list holding all segments
-	var newNode = null;
+
 	var i = this.list;
 	var inserted = false;
 	// We begin traversing at the first node
@@ -418,7 +413,7 @@ Tally.prototype.isSmaller = function (a, b, typeA) {
 	if (a == b) { return (typeA == this.nodeEnum.STOP ? true : false); }
 	return false;
 
-}
+};
 
 Tally.prototype.insertBeforeIth = function(i, time, type) {
 
@@ -432,7 +427,7 @@ Tally.prototype.insertBeforeIth = function(i, time, type) {
 	i.prevNode.nextNode = newNode;
 	newNode.prevNode = i.prevNode;
 	i.prevNode = newNode;
-}
+};
 
 
 Tally.prototype.traverse = function () {
@@ -558,9 +553,8 @@ function TallyNode(timePoint, type, factory) {
 	// Debug
 	this.factory.logger.log ("TallyNode: Created node ID=" + this.ID + " with timePoint=" + 
 		this.timePoint + " " + this.type.name);
-};
-
-TallyNode.prototype.toString = function(header) {
+}
+TallyNode.prototype.toString = function() {
 
 	return "Statistics: [Node ID=" + prntI(this.ID) + "] "  + " Time(s): " + prntF(this.timePoint) + 
 		"\tAction: " + this.type.name;
