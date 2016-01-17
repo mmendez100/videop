@@ -5,6 +5,8 @@
  The major benefit here is that once a timer is instantiated and fire away,
  any callback is no longer a worry to the class doing the work.
 
+ M Mendez / Jan 17
+
 */
 
 function Timer(interval, callback, logger)

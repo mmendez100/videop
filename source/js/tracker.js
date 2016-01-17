@@ -10,7 +10,10 @@
  The driver of this update is a timer, updating ten times a second (faster updates did
  not give an advantage and less updates result in choppiness). The timer is enclosed in
  its own Timer object. The timer is stopped when the user is not playing the video or 
-the video ends.
+ the video ends.
+ 
+ M Mendez / Jan 17
+
 
 */
 

@@ -10,6 +10,9 @@ Main
 
 See videop.js for a full explanation of the Videop object and its arguments.
 
+ M Mendez / Jan 17
+
+
 */
 var videoPlayer1 = new Videop("video1", "playbar", "#FFD700", "#8B0000", 0.08);
 

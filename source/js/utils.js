@@ -1,9 +1,18 @@
 "use strict";
 
-// The purpose of utils is to enclose the utility functions (the only non-OOP coding of this
-// project) used to print floating and percentage points with specific formatting. Rather than
-// use toPrecision, and to try to set leading zeroes with .Splice, this routine uses the very
-// versatile .toLocaleString powers such as min and max Integer and Fraction digits.
+/*
+
+ The purpose of utils is to enclose the utility functions (the only non-OOP coding of this
+ project) used to print floating and percentage points with specific formatting. Rather than
+ use toPrecision, and to try to set leading zeroes with .Splice, this routine uses the very
+ versatile .toLocaleString powers such as min and max Integer and Fraction digits.
+
+  M Mendez / Jan 17
+
+
+*/
+
+
 
 // Print integers with a min of three integer digits, zeroes if needed
 function prntI(val) {

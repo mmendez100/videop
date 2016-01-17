@@ -8,6 +8,8 @@
  and additional functionality, such as writing to a div, file, or service, can be
  added to this module.
 
+ M Mendez / Jan 17
+
 */
 
 // Constructor

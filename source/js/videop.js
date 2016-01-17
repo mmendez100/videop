@@ -1,6 +1,9 @@
 "use strict";
 
-/* The videop object is the main object of this project. It is attached via main.html to
+/* 
+   Main Class Videop, videop.js
+
+   The videop object is the main object of this project. It is attached via main.html to
    the html5 video object via the DOM ID of the html5 video componnent. Because all of its 
    state is stored in its instanciated closure (that works as a class object), different
    instances can attend to different videos without interfering with each other.
@@ -51,6 +54,7 @@
 
    More details of stats can be found in Stats.js
 
+    M Mendez / Jan 17
 
 
  */

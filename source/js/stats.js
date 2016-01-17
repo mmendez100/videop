@@ -297,6 +297,9 @@ Compute logic, state transitions, and complexity:
 	delta, but a transition from 1 to 0, indicates the end of an once-viewed segment with
 	a non-zero delta.
 
+	 M Mendez / Jan 17
+
+
 */
 
 
