@@ -4,10 +4,13 @@ Version: 0.0.9
 Summary:
 
 Videop() is a JavaScript video player control built using only JavaScript/ECMAScript, with a playbar, 
-video playback head, tracking, grabbing, and seeking via clicking on the playbar or grabbing the playhead with the mouse.
+video playback head, tracking, grabbing, and seeking via clicking on the playbar or grabbing 
+the playhead with the mouse.
 
 Start and stop times of segments viewed are stored as the video is paused or stopped.
-Then total times viewed once, twice, etc. are calculated and passed to a Logger() class, which in this version writes to the console. Aggregate times are calculated whenever the user pauses the video --or every five seconds during play time.
+Then total times viewed once, twice, etc. are calculated and passed to a Logger() class, 
+which in this version writes to the console. Aggregate times are calculated whenever the 
+user pauses the video --or every five seconds during play time.
 
 Videop(), is intended to be attached in JavaScript to an hmtl5 video object and is a 'class' object
 implemented via closure for storage in function Videop(), and with member functions added to
@@ -44,15 +47,24 @@ Files comprising this control:
 
 Overall Architecture:
 
-    Videop() analyzes the size of the html5 video element, and creates the objects to paint and attend to the playbar. The playbar object in turns contains the playhead object, that draws the playhead and current video time and erases both when movement or resizing occurs
+    Videop() analyzes the size of the html5 video element, and creates the objects to paint and 
+    attend to the playbar. The playbar object in turns contains the playhead object, that draws 
+    the playhead and current video time and erases both when movement or resizing occurs
 
-    Videop also captures events from the video element via callbacks, in turn calling Playbar() and PlayHead() handle all painting based on video and mouse events, including grabbing and "bolding" the playhead whenit is "grabbable," and responding to resize events.
+    Videop also captures events from the video element via callbacks, in turn calling Playbar() 
+    and PlayHead() handle all painting based on video and mouse events, including grabbing and 
+    "bolding" the playhead whenit is "grabbable," and responding to resize events.
 
     Stats() implicitly contains a state machine and stores segments viewed, and interleaves them 
     into a doubly-linked list to calculate statistics. Complexity is O(n) where n is the number of 
-    existing segments.(See detailed discussion below, for the complexity analysis and even more descriptions in stat.js). Stats() fires a five second timer to create on-the-fly updated statistics when playing is progressing, but also updates all statistics when the user stops the video or playing ends.
+    existing segments.(See detailed discussion below, for the complexity analysis and even more 
+    descriptions in stat.js). Stats() fires a five second timer to create on-the-fly updated 
+    statistics when playing is progressing, but also updates all statistics when the user stops 
+    the video or playing ends.
 
-    Tracker() captures via a timer.js class the position of the video every 100 mS and tells the Playbar to update to the right place in the playbar relative to its current dimensions and the total time of the video.
+    Tracker() captures via a timer.js class the position of the video every 100 mS and tells 
+    the Playbar to update to the right place in the playbar relative to its current dimensions 
+    and the total time of the video.
 
     The timers are all stopped when the video is not playing.
 
@@ -61,15 +73,24 @@ Coding Style
 
     The project uses an Object Oriented approach where a "constructor" is implemented as a function
     that holds all storage/member variables inside its closure. Member functions are implemented
-    as functions injected into the constructor's prototype, following the style of Zaka's "The Principles of Object-Oriented JavaScript." Neverthess, this is not taken to an extreme, and
-    getters and setters are not explicitly declared, nor underscores (as in _fakePrivateMemberVariable) are used. The disadvantage of this approach is the use of many, many redundant "this.xxxx" statements to refer to member variables or functions. The advantage is that there is exactly one copy of each member function machine code even when many instances of the class exist.
+    as functions injected into the constructor's prototype, following the style of Zaka's 
+    "The Principles of Object-Oriented JavaScript." Neverthess, this is not taken to an extreme, and
+    getters and setters are not explicitly declared, nor underscores (as in _fakePrivateMemberVariable) 
+    are used. The disadvantage of this approach is the use of many, many redundant "this.xxxx" 
+    statements to refer to member variables or functions. The advantage is that there is exactly 
+    one copy of each member function machine code even when many instances of the class exist.
 
     I am aiming for clarity and ease of expansion, hence the code tends to be a bit verbose, but
     debugging advantages do exist. Following C99 style recommendations, logical
     comparisons are written for clarity often as "if (state_x == true && stateY == false)..." versus 
-    "if (state_x && !state_y)..." The logger class is used to implement different levels of verbosity and changing the logger can help debugging and events be easily directed to a file or a data sync.Using filters in the debugging console to select 'tags' also is useful. For example, with full VERBOSE mode, changed in Videop(), when using the filter "Stat" many more messages regarding statistic calculations can be seen.
+    "if (state_x && !state_y)..." The logger class is used to implement different levels of verbosity 
+    and changing the logger can help debugging and events be easily directed to a file or a 
+    data sync. Using filters in the debugging console to select 'tags' also is useful. For example, 
+    with full VERBOSE mode, changed in Videop(), when using the filter "Stat" many more messages 
+    regarding statistic calculations can be seen.
 
-    Note: Coding style, when working on a team, though, is always optimal to what the team uses. No coding style is "absolutely" better.
+    Note: Coding style, when working on a team, though, is always optimal to what the team uses. 
+    No coding style is "absolutely" better.
 
 
 Alternatives Considered
@@ -77,15 +98,24 @@ Alternatives Considered
     Creating stats via state as done here is an "analytical" approach. However, creating analogues
     is also an option. An idea that came to mind was to paint in a hidden canvas the video viewed
     as horizontal lines and stack these lines on top of each other as the user viewed "areas"
-    of video. However, to obtain granularity, the Canvas/DIV could grow too large (over 36000 pixels for just one a hour interval at a mediocre 0.1 s resolution). Moreover, obtaining cumulative   results would mean examining each of the pixels in this DIV, and even with only 10 segments, this could take a very long time as over 360,000 pixels would have to be iterated over or some sort of bucket mechanism would be used.
+    of video. However, to obtain granularity, the Canvas/DIV could grow too large (over 36000 pixels
+    for just one a hour interval at a mediocre 0.1 s resolution). Moreover, obtaining cumulative
+    results would mean examining each of the pixels in this DIV, and even with only 10 segments, 
+    this could take a very long time as over 360,000 pixels would have to be iterated over or some 
+    sort of bucket mechanism would be used.
 
     The math around overlapping segments is reminiscent of bit-wise OR operations and I considered 
     implementing the tracking as writting 1s in a block of bits, and ORing those bits with new
     segments. The problem in JavaScript is that bit operations are run over 32bit fields, and that
-    these would have to also be looped over and over. As in using a visual Canvas/DIV as an analogue, the basic problem is that we are basically measuring time, and that any analogue is challenged
+    these would have to also be looped over and over. As in using a visual Canvas/DIV as an analogue, 
+    the basic problem is that we are basically measuring time, and that any analogue is challenged
     by the infinite indivisibility of time.
 
-    Another alternative that I did not explore is to consider this a set theory problem with its own set operators, where each set is an interval. In this case, if nodes defining a set, and math on these nodes can be deviced, this becomes a problem of the union of an old set representing all past intervals and the union of a new set. [Analytically, I am implicitly doing this over a number line].
+    Another alternative that I did not explore is to consider this a set theory problem with its own
+    set operators, where each set is an interval. In this case, if nodes defining a set, and math on
+    these nodes can be deviced, this becomes a problem of the union of an old set representing all
+    past intervals and the union of a new set. [Analytically, I am implicitly doing this over 
+    a numberline].
 
 
 Lessons Learned & Challenges
@@ -200,7 +230,8 @@ Compute logic, state transitions, and complexity for the Rest of the Control
 
         Hence algorithmically, all of this project's code should be O(n).
 
-        This, however, does not mean that the computing experience scales smoothly. At some point, with videoslarge enough, and with computers busy enough and hardpressed with low memory
+        This, however, does not mean that the computing experience scales smoothly. At some 
+        point, with videoslarge enough, and with computers busy enough and hardpressed with low memory
         and demanding framerates in multiple videos and tasks, the system can tip to 
         actual performance that might be insufficient to the users --though not 
         'necessarily' related to the algorithms in this program.
