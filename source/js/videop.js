@@ -203,10 +203,6 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 	this.logger.assert(this.playHeadStyle != "", "No playhead style!");
 	this.logger.assert(this.playHeadStyleBold != "", "No bold playhead style!");
 
-	// We calculate the width of the playbar to 1%
-	this.brushWidth = Math.round(this.playbar.canvas.width * 0.01);
-	if (this.brushWidth <= 1) { this.brushWidth = 5; } // A minimal size please!
-
 	 // Stuff to print the time by the playbar
      this.vidTimeTextWidth = -1;
      this.vidTimeFontPx = "";
@@ -247,8 +243,8 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 }
 PlayHead.prototype.resize = function () {
 
-    // We calculate the width of the playbar at 1%
-    this.brushWidth = Math.round(this.playbar.canvas.width * 0.01);
+    // We calculate the width of the playbar here 
+    this.brushWidth = Math.round(this.playbar.canvas.width * 0.0075);
     if (this.brushWidth <= 1) { this.brushWidth = 5; } // A minimal size please!
 
     // Dimensions for printing the time near the playhead
@@ -258,7 +254,7 @@ PlayHead.prototype.resize = function () {
     this.xTextHor = this.playbar.canvas.height - Math.round(this.playbar.canvas.height * .20);
 
     // We add some tolerance so that the playhead is easier to grab
-    this.grabTolerance = this.brushWidth * 3;
+    this.grabTolerance = this.brushWidth * 2;
     this.logger.log("Playhead brushWidth="  + this.brushWidth);
     this.logger.log("Playhead grab tolerance=" + this.grabTolerance);
 
@@ -268,9 +264,11 @@ PlayHead.prototype.resize = function () {
 
 };
 
+
+// Draw function, uncomment log calls for debugging. Commented out for efficiency
 PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 
-	// force is an optional argument
+	// force is an optional argument (rewrite later to avoid a slightly expensive call here...)
 	if (typeof(force) == "undefined") { force = false; }
 
 	// No context, we are outta here!
@@ -282,9 +280,9 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 	// Figure out where to draw. And draw!
 	var xPos = -1;
 	if (relPosition >= 0) {
-		xPos = Math.round(this.playbar.canvas.width * relPosition);
-		this.logger.log("drawHead relative placement req, calculated pos to be =" + xPos +
-			" bold: " + bold); 
+		xPos = this.playbar.canvas.width * relPosition;
+	//	this.logger.log("drawHead relative placement req, calculated pos to be =" + xPos +
+	//		" bold: " + bold); 
 	}
 	if (absPosition >= 0) {
 		xPos = absPosition - this.playbar.canvas.getBoundingClientRect().left;
@@ -292,8 +290,8 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 		if (xPos + this.brushWidth >= this.playbar.canvas.width) {
 			xPos =  this.playbar.canvas.width - this.brushWidth;
 		}
-		this.logger.log("drawHead absolute placement req, calculated pos to be =" + xPos +
-			" bold: " + bold); 
+	//	this.logger.log("drawHead absolute placement req, calculated pos to be =" + xPos +
+	//		" bold: " + bold); 
 	}
 
 	// If at the end, correct as we need to consider the brush
@@ -317,18 +315,20 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 	// If we get here we really do need to draw.
 	// First delete the previous position of the playbar, if any
 	if (this.xPosLast != -1) {
-		this.canvasC.clearRect(this.xPosLast,0,this.brushWidth,this.playbar.canvas.height);		
-		this.logger.log("Deleted playbar at x=" + this.xPosLast);
+		// -5 & +5 are fudge factors that let us not round when generating xPos and not
+		// leave trails behind the bar as we write it...
+		this.canvasC.clearRect(this.xPosLast-5,0,this.brushWidth+5,this.playbar.canvas.height);		
+		// this.logger.log("Deleted playbar at x=" + this.xPosLast);
 
-		// Now unpaint the time (revisit, avoid extra padding...)
-		this.canvasC.clearRect(this.xPosLast,0,this.vidTimeTextWidth.width * 4, this.playbar.canvas.height);
+		// Now unpaint the time 
+		this.canvasC.clearRect(this.xPosLast,0,this.vidTimeTextWidth.width * 1.5, this.playbar.canvas.height);
 	}
 
 	// Now draw the new one
 	if (bold) { this.canvasC.fillStyle = this.playHeadStyleBold; }
 		else { this.canvasC.fillStyle = this.playHeadStyle; }
-	this.logger.log("Drawing playbar at x=" + xPos + " style:" + this.canvasC.fillStyle +
-		" grabbed: " + this.grabbed);
+	//this.logger.log("Drawing playbar at x=" + xPos + " style:" + this.canvasC.fillStyle +
+	//	" grabbed: " + this.grabbed);
 	this.canvasC.fillRect(xPos,0,this.brushWidth,this.playbar.canvas.height);
 
 	// Save this drawing as the old position
@@ -336,13 +336,13 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 	this.boldLast = bold;
 
 	// Now paint the time
-	var vidTime = prntF2(this.playbar.videop.player.currentTime);
+	var vidTime = prntF3(this.playbar.videop.player.currentTime);
 	this.canvasC.fillStyle = 'white'; // Should make a parameter later
 	this.vidTimeTextWidth = this.canvasC.measureText (vidTime, xPos + this.xTextLeftMargin, this.xTextHor);
 	this.canvasC.fillText (vidTime, xPos + this.xTextLeftMargin, this.xTextHor);
-	this.logger.log("vidTime=" + vidTime + " vitTimeTextWidth.width=" +
-    this.vidTimeTextWidth.width + "xTextLeftMargin=" +
-    this.xTextLeftMargin + " xTextHor=" + this.xTextHor);
+	// this.logger.log("vidTime=" + vidTime + " vitTimeTextWidth.width=" +
+    // this.vidTimeTextWidth.width + "xTextLeftMargin=" +
+    // this.xTextLeftMargin + " xTextHor=" + this.xTextHor);
  
 };
 
@@ -412,9 +412,9 @@ PlayHead.prototype.handleOnMouseUp = function(e) {
 PlayHead.prototype.handleOnClick = function(e) {
 	this.logger.log("handleOnClick");
 	this.grabbed = false; // no longer grabbing it, if we were grabbing it
-	this.drawHead(-1, e.pageX, false);
 	var relNewPos = e.pageX / this.playbar.canvas.width;
 	this.playbar.videop.handleOnClickSeek(relNewPos);
+	this.drawHead(-1, e.pageX, false); // repaint, but with new vidtime!
 };
 
 PlayHead.prototype.handleOnMouseMove = function(e) {

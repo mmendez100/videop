@@ -29,6 +29,15 @@ function prntF2(val) {
 
 }
 
+// Print floatswith no more than 3 fractional parts, at least 2 integer parts, with zeroes as needed
+function prntF3(val) {
+
+	return (val).toLocaleString('en-US', {minimumIntegerDigits: 2, 
+		minimumFractionDigits: 3, maximumFractionDigits: 3, useGrouping:false});
+
+}
+
+
 // Take care of printing a fractional part as a percent, with % attached, 2 fractional digits.
 function prntP(val) {
 
