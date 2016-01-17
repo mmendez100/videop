@@ -1,8 +1,12 @@
 "use strict";
+/*
 
-// A Timer class that encapsulates timers and allows us to call them in OOP fashion.
-// The major benefit here is that once a timer is instantiated and fire away,
-// any callback is no longer a worry to the class doing the work.
+ A Timer class that encapsulates timers and allows us to call them in OOP fashion.
+ The major benefit here is that once a timer is instantiated and fire away,
+ any callback is no longer a worry to the class doing the work.
+
+*/
+
 function Timer(interval, callback, logger)
 {        
 	this.logger = logger;

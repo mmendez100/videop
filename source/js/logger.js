@@ -1,10 +1,14 @@
 "use strict";
 
-//// A Utility Logger Object ////
+/*
 
-// The level of chatter can be controlled by swapping the values placed to setLevel(),
-// and additional functionality, such as writing to a div, file, or service, can be
-// added to this module.
+ A Utility Logger Object 
+
+ The level of chatter can be controlled by swapping the values placed to setLevel(),
+ and additional functionality, such as writing to a div, file, or service, can be
+ added to this module.
+
+*/
 
 // Constructor
 function Logger() {

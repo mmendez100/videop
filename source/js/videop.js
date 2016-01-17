@@ -1,7 +1,56 @@
 "use strict";
 
 /* The videop object is the main object of this project. It is attached via main.html to
- * an html5 video object. 
+   the html5 video object via the DOM ID of the html5 video componnent. Because all of its 
+   state is stored in its instanciated closure (that works as a class object), different
+   instances can attend to different videos without interfering with each other.
+
+   The videop object in turn creates a logger (which can later be expanded to point to 
+   other diferent data points vs. console.log, such as a file, or networked data sinks).
+	
+   Videop instanciates a Playbar object, which in turns contains a PlayHead object.
+   Videop also instanciates the Stats object, which is in charge of keeping track of
+   statistics collection and storage, and the Tracker object which syncs the Playbar's
+   PlayHead object depending on where the video is playing at a given time. (Tracker and
+   Stats use their own Timer class objects to service these tasks asynchronously). Videop
+   also handles the events arising from the html5 video element, and calls the appropriate
+   classes it contains for events such as resize, and mouse moves moving or hovering
+   over the playhead and the playbar, as well as click (for starting and pausing the 
+   video), and the mouse movements that are translated into grabbing of the playhead.
+
+   Aside of creating and painting the canvas (which occurs in Playbar, with Playbar using
+   the CSS playBarStyle class to do so), the actual painting of the playhead and the current
+   time occurs inside PlayHead, inside its drawHead() method. The drawHead() method is
+   smart enough to not draw what was just drawn, and can be called to draw the playhead
+   in relative terms (i.e. in the appropriate playbar position) based on the percentage of
+   the video currently being seen, or in absolute terms (i.e. pixel-based) to respond to
+   mouse events.
+
+   The playhead is drawn with an additional feature --when the user's mouse is near it,
+   it turns "bold" using the playHeadStyleBold color and remains so when grabbed. When the
+   user hovers away, it turns to its normal playHeadStyle. Tolerances for easier grabbing
+   of the playhead are implemented, so that the user does not have to exactly click on it.
+   playBarRatio indicates how thin (or thick) as a percent the playbar is with respect to
+   the video.
+
+   To facilitate debugging, change the log level (stored as an Enum) to VERBOSE. Then
+   filters can be applied to console.log. For example, filtering by "Stat" includes not
+   only the cumulative statistics, but much more information on when statistics are
+   calculated. The logged entries are in certain key places prefaced by function or
+   by a 'tag' so that they can be filtered. In addition, at level VERBOSE, the logger
+   prints each assert()'s suppressed error messages. (assert() throws an error if it
+   fails.
+
+   Arguments:
+   videoId - the DOM ID of the hmtl5 video player.
+   playBarStyle - the playbar's CSS class defined in videop.css
+   playHeadStyle - passed to the fillStyle() context call drawing the playHead unbolded
+   playHeadStyleBold - passed to the fillStyle() context call drawing the playHead bolded
+   playbarRatio - the ratio, expressed as a numerical percent (i.e. 0.10 for 10%) that
+      determines how thick the playbar is vs. the video player.
+
+   More details of stats can be found in Stats.js
+
 
 
  */

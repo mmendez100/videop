@@ -1,14 +1,18 @@
 "use strict";
+/*
 
-// The purpose of the tracker object is to repaint the videohead when the user is not
-// actively interacting with the video. As the video plays, the video head needs to
-// move to a place proportional to the video's current time position --which in turn
-// needs to be updated in a graphical location proportional to the current length of the
-// playbar.
-//
-// The driver of this update is a timer, updating ten times a second (faster updates did
-// not give an advantage and less updates result in choppiness). The timer is enclosed in
-// its own Timer object.
+ The purpose of the tracker object is to repaint the videohead when the user is not
+ actively interacting with the video. As the video plays, the video head needs to
+ move to a place proportional to the video's current time position --which in turn
+ needs to be updated in a graphical location proportional to the current length of the
+ playbar.
+
+ The driver of this update is a timer, updating ten times a second (faster updates did
+ not give an advantage and less updates result in choppiness). The timer is enclosed in
+ its own Timer object. The timer is stopped when the user is not playing the video or 
+the video ends.
+
+*/
 
 
 // Constructor, Tracker Object
