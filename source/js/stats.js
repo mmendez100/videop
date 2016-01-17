@@ -68,9 +68,6 @@ Stats.prototype.peekStats = function () {
 		return;
 	}
 
-	// Mark this transition in our table to update our records
-	//this.logInterval(this.actionEnum.PLAY_PLAY);
-
 	// On the fly, get each entry in our table of intervals, copy, and create a new tally
 	this.tableCopy = [];
 	this.tempTally = new Tally(this, this.logger);
@@ -126,8 +123,7 @@ Stats.prototype.actionEnum = Object.freeze(
 								{
 									INIT_STATE : {name: "INIT_STATE"},
 									PLAY_BEGINS : {name: "PLAY_BEGINS"},
-									PLAY_STOPS : {name: "PLAY_STOPS"},
-									PLAY_PLAY : {name: "PLAY_PLAY"}
+									PLAY_STOPS : {name: "PLAY_STOPS"}
 								});
 
 
@@ -203,24 +199,6 @@ Stats.prototype.logInterval = function (action) {
 
 		return;
 	}
-
-	// Case 5 & LAST: We are playing and we continue to play... just update this entry
-	// But first, paranoid check... Are we in the right state?
-	this.logger.assert(action == this.actionEnum.PLAY_PLAY, "Coding error! Invalid state/action!!!");
-
-	// An interim interval exists, not yet completed. It should always be the last array entry
-	// Grab the top entry and verify it should be IN_PROGRESS
-	oldEntry = this.table.pop();
-	
-	// Update the entry, still in progress
-	// echo it to the console via the log
-	this.logger.log("Stats: An on-going view interval is being updated via timer!"); 
-	oldEntry.update(oldEntry.entryEnum.IN_PROGRESS);
-
-	// Add it back to the table
-	this.table.push(oldEntry);
-
-	// The state remains as PLAY_PLAY, no change);
 
 }; 
 

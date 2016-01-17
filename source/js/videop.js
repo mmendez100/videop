@@ -179,7 +179,7 @@ Playbar.prototype.positionCanvas = function () {
 Playbar.prototype.handleOnResize = function () {
 
 	this.positionCanvas();
-	this.playHead.resizeVidTime();
+	this.playHead.resize();
 	this.playHead.drawHead (-1, -1, null, true);
 };
 
@@ -203,19 +203,18 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 	this.logger.assert(this.playHeadStyle != "", "No playhead style!");
 	this.logger.assert(this.playHeadStyleBold != "", "No bold playhead style!");
 
-	// Stuff to print the time by the playbar
-	this.vidTimeFontPx = ""; // Generated later, could pass in for v2.
-	this.xTextLeftMargin =  this.brushWidth * 3;
-	this.xTextHor = this.playbar.canvas.height - Math.round(this.playbar.canvas.height * .20);
-
 	// We calculate the width of the playbar to 1%
 	this.brushWidth = Math.round(this.playbar.canvas.width * 0.01);
 	if (this.brushWidth <= 1) { this.brushWidth = 5; } // A minimal size please!
 
-	// We add some tolerance so that it is easier to grab
-	this.grabTolerance = this.brushWidth * 3;
-	this.logger.log("Playhead brushWidth=" + this.brushWidth);
-	this.logger.log("Playhead grab tolerance=" + this.grabTolerance);
+	 // Stuff to print the time by the playbar
+     this.vidTimeTextWidth = -1;
+     this.vidTimeFontPx = "";
+     this.xTextLeftMargin =  -1;
+     this.xTextHor = -1;
+
+    // A tolerance so that we do not need to EXACTLY hover over the playhead
+    this.grabTolerance = -1;
 
 	// As this is the first draw, the last position is non-existent.
 	// Nobody is grabbing the playhead, and was not painted 'bold'
@@ -231,7 +230,8 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 		return;
 	}
 
-	this.resizeVidTime();
+    // Figure out dimensions of everything
+	this.resize();
 
 	// Draw at the initial position at 0%
 	this.drawHead(0, -1, false);
@@ -245,7 +245,22 @@ function PlayHead (playbar, playHeadStyle, playHeadStyleBold, logger) {
 	this.playbar.canvas.onmousemove = this.handleOnMouseMove.bind(this);
 	this.playbar.canvas.onclick = this.handleOnClick.bind(this);
 }
-PlayHead.prototype.resizeVidTime = function () {
+PlayHead.prototype.resize = function () {
+
+    // We calculate the width of the playbar at 1%
+    this.brushWidth = Math.round(this.playbar.canvas.width * 0.01);
+    if (this.brushWidth <= 1) { this.brushWidth = 5; } // A minimal size please!
+
+    // Dimensions for printing the time near the playhead
+    this.vidTimeTextWidth = 0; // Will be determined by the canvas context when running
+    this.vidTimeFontPx = ""; // Generated later, could pass in for v2.
+    this.xTextLeftMargin =  this.brushWidth * 3;
+    this.xTextHor = this.playbar.canvas.height - Math.round(this.playbar.canvas.height * .20);
+
+    // We add some tolerance so that the playhead is easier to grab
+    this.grabTolerance = this.brushWidth * 3;
+    this.logger.log("Playhead brushWidth="  + this.brushWidth);
+    this.logger.log("Playhead grab tolerance=" + this.grabTolerance);
 
 	// Figure out sizes of the playhead's videotime
 	this.vidTimeFontPx = Math.round (this.playbar.canvas.height * 0.8) + "px sans-serif" ; // 80%
@@ -306,7 +321,7 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 		this.logger.log("Deleted playbar at x=" + this.xPosLast);
 
 		// Now unpaint the time (revisit, avoid extra padding...)
-		this.canvasC.clearRect(this.xPosLast,0,this.vidTimeTextWidth * 4, this.playbar.canvas.height);
+		this.canvasC.clearRect(this.xPosLast,0,this.vidTimeTextWidth.width * 4, this.playbar.canvas.height);
 	}
 
 	// Now draw the new one
@@ -322,10 +337,13 @@ PlayHead.prototype.drawHead = function(relPosition, absPosition, bold, force) {
 
 	// Now paint the time
 	var vidTime = prntF2(this.playbar.videop.player.currentTime);
-	this.canvasC.fillStyle = 'white';
+	this.canvasC.fillStyle = 'white'; // Should make a parameter later
 	this.vidTimeTextWidth = this.canvasC.measureText (vidTime, xPos + this.xTextLeftMargin, this.xTextHor);
 	this.canvasC.fillText (vidTime, xPos + this.xTextLeftMargin, this.xTextHor);
-
+	this.logger.log("vidTime=" + vidTime + " vitTimeTextWidth.width=" +
+    this.vidTimeTextWidth.width + "xTextLeftMargin=" +
+    this.xTextLeftMargin + " xTextHor=" + this.xTextHor);
+ 
 };
 
 
