@@ -1,6 +1,6 @@
 # videop, 
 
-Version: 0.0.9
+Version: 0.1.0
 Summary:
 
 Videop() is a JavaScript video player control built using only JavaScript/ECMAScript, with a playbar, 
