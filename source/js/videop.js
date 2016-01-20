@@ -57,6 +57,11 @@
     M Mendez / Jan 17
 
 
+   History:
+
+   Jan 20, 2016: Added a refresh via Timer for Firefox for playbar repainting
+
+
  */
 
 
@@ -93,11 +98,23 @@ function Videop(videopId, playBarStyle, playHeadStyle, playHeadStyleBold, playba
     this.player.onended = this.handleOnEnded.bind(this);
     window.onresize = this.handleOnResize.bind(this);
 
-    // Firefox, no resizes when building... do the logic.
-    //if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) { 
-    //  this.logger.log("Firing playbar sizing logic in resize for Firefox!");
-    //  this.handleOnResize();
-    //}
+    // Firefox, no resizes when building... Temp Hack! Force repaint with first mouse over. A hack here! :)
+    this.fireFoxHandler = null;
+    this.fireFoxTimer = null;
+    if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) { 
+        this.logger.log("Setting up a resizing event in a bit for Firefox!");
+           this.fireFoxHandler = function () {
+           this.fireFoxTimer.stop();
+           this.fireFoxTimer = null;
+           this.handleOnResize();
+           this.fireFoxHandler = null; // only do iit once.
+           this.logger.log("Processed a resizing event in a bit for Firefox!");
+
+        }
+        this.fireFoxTimer = new Timer (500, this.fireFoxHandler.bind(this), this.logger);
+        this.fireFoxTimer.start();
+    } 
+
 }
 Videop.prototype.pauseVideo = function () {
     this.stats.logInterval(this.stats.actionEnum.PLAY_STOPS);
@@ -105,6 +122,7 @@ Videop.prototype.pauseVideo = function () {
     this.player.pause();
     this.paused = true;
 };
+
 
 Videop.prototype.playVideo = function () {
     this.stats.logInterval(this.stats.actionEnum.PLAY_BEGINS);
