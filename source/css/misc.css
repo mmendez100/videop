@@ -1,5 +1,5 @@
 body {
-    background-color: inherit;
+    background-color: DarkGrey;
 }
 
 h1 {
@@ -7,5 +7,9 @@ h1 {
 }
 
 h2 {
+    color: cadetblue;
+}
+
+h3 {
     color: cadetblue;
 }
